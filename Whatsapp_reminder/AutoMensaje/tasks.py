@@ -2,10 +2,10 @@ from celery import shared_task
 from datetime import timedelta, datetime
 from django.utils import timezone
 from .models import Cliente, Recordatorio
-from .utils import enviar_whatsapp  # Función para enviar WhatsApp
 
 @shared_task
 def enviar_recordatorio():
+    from .utils import enviar_whatsapp  # Mueve la importación dentro de la función
     recordatorios = Recordatorio.objects.filter(enviado=False)
 
     for recordatorio in recordatorios:
@@ -17,7 +17,6 @@ def enviar_recordatorio():
                 recordatorio.save()
         except Exception as e:
             print(f"Error al procesar recordatorio ID {recordatorio.id}: {e}")
-
 
 @shared_task
 def programar_recordatorios():

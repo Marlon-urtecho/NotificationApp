@@ -81,8 +81,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',  # Usamos PostgreSQL
         'NAME': 'whatsapp_db',  # El nombre de tu base de datos en PostgreSQL
-        'USER': 'postgres',  # Usuario de PostgreSQL (por defecto suele ser 'postgres')
-        'PASSWORD': 'tu_contraseña',  # La contraseña de tu usuario 'postgres'
+        'USER': 'postgresUser',  # Usuario de PostgreSQL (por defecto suele ser 'postgres')
+        'PASSWORD': 'MAUD2023.',  # La contraseña de tu usuario 'postgres'
         'HOST': 'localhost',  # O la dirección IP de tu servidor de base de datos (si es remoto)
         'PORT': '5432',  # El puerto por defecto de PostgreSQL
     }

@@ -9,3 +9,7 @@ https://youtu.be/l0F09p_7L7k?si=cd9-ADb7kOB_8x4B
 <h1>Documanetacion Api<h1/>
 https://youtu.be/Xts8NmyAc8c?si=6SbAvYKCLAXna-2k
 
+<h1>table models<h1/>
+[https://youtu.be/Xts8NmyAc8c?si=6SbAvYKCLAXna-2k](https://youtu.be/vNu3ZsiM2Q8?si=8PKt3Zs6gxzwUIAP)
+
+

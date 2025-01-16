@@ -1,0 +1,52 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+// Reseteo de márgenes y padding
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body{
+  font-family: "Rubik", serif;
+  font-optical-sizing: auto;
+
+}
+
+// Variables de color
+$Light: #ffffff;
+$gray: #c4ccde;
+
+// Estilos para la barra de navegación
+.navbar {
+  background: $Light;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid $gray;
+}
+
+.sidebar{
+  width: 14rem;
+  height: calc(100vh - 52px);
+  border-right: 1px solid $gray;
+  ul{
+    list-style: none;
+    padding:1rem 2rem;
+    li{
+      margin-bottom: 1rem;
+      a{
+        text-decoration: none;
+        color: black;
+        font-size: 1.2rem;
+        font-weight: 500;
+        display: block;
+        padding: 0.5rem 0;
+        border-radius: 5px;
+        transition: 0.3s;
+        &:hover{
+          background: $gray;
+        }
+      }
+    }
+  }
+}
+

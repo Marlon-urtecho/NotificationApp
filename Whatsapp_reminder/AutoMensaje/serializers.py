@@ -1,5 +1,13 @@
 from rest_framework import serializers
 from .models import Cliente, Recordatorio
+from .models import User, Sucursal
+
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
 
 class ClienteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,4 +17,10 @@ class ClienteSerializer(serializers.ModelSerializer):
 class RecordatorioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recordatorio
-        fields = ['cliente', 'mensaje', 'fecha_envio', 'enviado']
+        fields = '__all__'
+
+
+class SucursalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sucursal
+        fields = '__all__'

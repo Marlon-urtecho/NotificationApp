@@ -42,4 +42,4 @@ def programar_recordatorios():
                 mensaje=f"Último recordatorio: Su seguro vence mañana ({cliente.fecha_renovacion}).",
                 fecha_envio=timezone.make_aware(datetime.combine(dia_antes, datetime.min.time())),
                 enviado=False
-            )
+            )   

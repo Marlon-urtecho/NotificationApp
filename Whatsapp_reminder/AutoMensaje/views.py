@@ -1,10 +1,21 @@
 from rest_framework import viewsets
-from .models import Cliente, Recordatorio
-from .serializers import ClienteSerializer, RecordatorioSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Cliente, Recordatorio, User, Sucursal
+from .serializers import ClienteSerializer, RecordatorioSerializer, UserSerializer, SucursalSerializer
 from django.http import HttpResponse
 from .tasks import programar_recordatorios
 
 
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    
+class SucursalViewSet(viewsets.ModelViewSet):
+    queryset = Sucursal.objects.all()
+    serializer_class = SucursalSerializer
+    
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
@@ -12,6 +23,7 @@ class ClienteViewSet(viewsets.ModelViewSet):
 class RecordatorioViewSet(viewsets.ModelViewSet):
     queryset = Recordatorio.objects.all()
     serializer_class = RecordatorioSerializer
+    
     
 def programar_recordatorios_view(request):
     programar_recordatorios.apply_async()  # Ejecuta la tarea de forma asincrónica

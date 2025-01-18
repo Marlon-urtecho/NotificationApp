@@ -12,4 +12,6 @@ https://youtu.be/Xts8NmyAc8c?si=6SbAvYKCLAXna-2k
 <h1>table models<h1/>
 https://youtu.be/vNu3ZsiM2Q8?si=gENEa_bNPkXSc9_s
 
+<h1>Token de Ngrok<h1/>
+https://dashboard.ngrok.com/get-started/your-authtoken
 

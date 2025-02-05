@@ -1,6 +1,5 @@
 
-# Vista para el bot que interactua con el usuario
-from datetime import datetime
+# Vista para el bot que interactua con el usuarioffrom datetime import datetime
 from pyexpat.errors import messages
 from turtle import pd
 from venv import logger
@@ -240,6 +239,8 @@ def bot(request):
     return HttpResponse("Método no permitido", status=405)
 
 
+
+
 @csrf_exempt
 @api_view(['POST'])
 def importar_clientes(request):
@@ -308,6 +309,7 @@ def importar_clientes(request):
     return JsonResponse({'message': 'No se ha subido ningún archivo.'}, status=400)
 
 # para el inser de los clientes desde la fise de excel
+
 @csrf_exempt
 @api_view(['POST'])
 def importar_clientes_desde_b2(request):

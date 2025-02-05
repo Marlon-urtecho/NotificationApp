@@ -122,6 +122,7 @@ def programar_recordatorios():
         logger.info("No se crearon nuevos recordatorios.")
 
         
+
 @shared_task
 def enviar_mensajes_bienvenida(cliente_id):
     try:

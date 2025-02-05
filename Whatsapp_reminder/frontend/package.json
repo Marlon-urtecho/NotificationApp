@@ -7,10 +7,9 @@
     "bootstrap": "^5.3.3",
     "chart.js": "^4.4.7",
     "cra-template": "1.2.0",
-    "datatables.net": "^2.2.2",
-    "datatables.net-bs5": "^2.2.2",
+    "datatables.net": "^2.2.1",
+    "datatables.net-bs5": "^2.2.1",
     "font-awesome": "^4.7.0",
-    "jquery": "^3.7.1",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.9",
     "react-chartjs-2": "^5.3.0",
@@ -29,7 +28,14 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "@babel/plugin-proposal-private-property-in-object": "^7.14.5",
     "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
   "browserslist": {
     "production": [
@@ -44,14 +50,9 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.2.0",
     "babel-eslint": "^10.1.0",
-    "eslint": "^8.57.1",
-    "eslint-config-airbnb": "^19.0.4",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-react": "^7.37.4"
+    "eslint": "^8.0.0",
+    "eslint-config-react-app": "^7.0.1"
   },
   "resolutions": {
     "eslint": "8.0.0"

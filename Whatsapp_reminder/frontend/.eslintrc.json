@@ -1,43 +1,47 @@
 {
-  "extends": [
-    "airbnb",
-    "airbnb/hooks",
-    "plugin:react/recommended"
-  ],
-  "parserOptions": {
-    "ecmaVersion": 2021,
-    "sourceType": "module",
-    "ecmaFeatures": {
-      "jsx": true
-    }
-  },
-  "env": {
-    "browser": true,
-    "node": true
-  },
-  "rules": {
-    "react/prop-types": "off",
-    "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
-    "max-len": "off",
-    "jsx-a11y/label-has-associated-control": "off",
-    "react/button-has-type": "off",
-    "no-multi-spaces": "off",
-    "react/jsx-props-no-multi-spaces": "off",
-    "import/no-extraneous-dependencies": [
-      "error", 
+    "extends": [
+      "airbnb",
+      "airbnb/hooks",
+      "plugin:react/recommended"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2021,
+      "sourceType": "module",
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "env": {
+      "browser": true,
+      "node": true
+    },
+    "rules": {
+      "react/prop-types": "off",
+      "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
+      "max-len": "off",
+      "jsx-a11y/label-has-associated-control": "off",
+      "react/button-has-type": "off",
+      "no-multi-spaces": "off",
+      "react/jsx-props-no-multi-spaces": "off",
+      "import/no-extraneous-dependencies": [
+        "error", 
+        {
+          "devDependencies": ["**/setupTests.js", "**/*.test.js"]
+        }
+      ]
+    },
+    "overrides": [
       {
-        "devDependencies": ["**/setupTests.js", "**/*.test.js"]
+        "files": ["**/*.js", "**/*.jsx"],
+        "rules": {
+          "react/jsx-a11y/label-has-associated-control": "off", // Desactivar regla conflictiva
+          "linebreak-style": ["off"], 
+          "no-trailing-spaces": "off",
+          "arrow-parens": ["off"],
+          "object-curly-newline": ["off"], 
+          "comma-dangle": ["off"]
+        }
       }
     ]
-  },
-  "overrides": [
-    {
-      "files": ["**/*.js", "**/*.jsx"],
-      "rules": {
-        "react/jsx-a11y/label-has-associated-control": "off", // Desactivar regla conflictiva
-        "linebreak-style": ["off"],
-        "no-trailing-spaces": "off"
-      }
-    }
-  ]
-}
+  }
+  

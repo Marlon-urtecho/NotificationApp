@@ -28,8 +28,8 @@ def enviar_whatsapp_twilio(to, message):
 
     # Verificamos si el número del cliente es válido
     if telefono_cliente:
-        account_sid = 'TWILIO_ACCOUNT_SID'  # Tu SID de Twilio
-        auth_token = 'TWILIO_AUTH_TOKEN'  # Tu Token de autenticación de Twilio
+        account_sid = 'sid'  # Tu SID de Twilio
+        auth_token = 'token'  # Tu Token de autenticación de Twilio
         client = Client(account_sid, auth_token)
 
         # Número de WhatsApp de Twilio (remitente)

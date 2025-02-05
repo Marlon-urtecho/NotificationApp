@@ -8,7 +8,7 @@ function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Aquí podrías agregar validaciones de formulario si lo necesitas
     // Por ahora, simplemente redirigimos al usuario al home después de enviar el formulario
     if (email && password) {

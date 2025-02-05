@@ -8,7 +8,7 @@ import {
   Navbar,
   NavbarBrand,
   NavbarToggler,
-  UncontrolledDropdown
+  UncontrolledDropdown,
 } from 'reactstrap';
 import '../App.scss';
 
@@ -18,18 +18,18 @@ function NavbarNav(args) {
   const toggle = () => setIsOpen(!isOpen);
 
   return (
-    <Navbar  color="blue" light expand="lg">
+    <Navbar color="blue" light expand="lg">
       <div className="container-fluid">
         <NavbarBrand href="#">
           <img src="/seguros_dibujo.jpg" alt="Logo" style={{ height: '50px', marginRight: '10px' }} />
-          | Seguros Notification 
+          | Seguros Notification
         </NavbarBrand>
         <NavbarToggler onClick={toggle} />
         <Collapse isOpen={isOpen} navbar>
           <Nav className="me-auto" navbar>
             <UncontrolledDropdown nav inNavbar>
               <DropdownToggle nav caret>
-              <img src="/settings.png" alt="Logo" style={{ height: '50px', marginRight: '0px' }} />
+                <img src="/settings.png" alt="Logo" style={{ height: '50px', marginRight: '0px' }} />
                 settings
               </DropdownToggle>
               <DropdownMenu right>
@@ -41,7 +41,7 @@ function NavbarNav(args) {
                 </DropdownItem>
                 <DropdownItem divider />
                 <DropdownItem>
-                 Cerrar Sesión
+                  Cerrar Sesión
                 </DropdownItem>
               </DropdownMenu>
             </UncontrolledDropdown>

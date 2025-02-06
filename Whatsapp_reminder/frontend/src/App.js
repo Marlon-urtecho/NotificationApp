@@ -1,59 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import './App.css';
+import React from 'react';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import './App.scss';
+import Navbar from './Components/Navbar';
+import Sidebar from './Components/Sidebar';
+import Clients from './Pages/Clients';
+import Dashboard from './Pages/Dashboard';
+import Home from './Pages/Home';
+import Recordatorios from './Pages/Recordatorios';
+import Sucursales from './Pages/Sucursales';
+import Users from './Pages/Users';
 
 function App() {
-  const [recordatoriosPendientes, setRecordatoriosPendientes] = useState([]);
-  const [recordatoriosEnviados, setRecordatoriosEnviados] = useState([]);
-
-  useEffect(() => {
-    // Hacer una solicitud a la API de Django para obtener los recordatorios
-    fetch('http://localhost:8000/api/recordatorios/')  // Asegúrate de que esta URL sea correcta
-      .then(response => response.json())
-      .then(data => {
-        const pendientes = data.recordatorios.filter(recordatorio => !recordatorio.enviado);
-        const enviados = data.recordatorios.filter(recordatorio => recordatorio.enviado);
-
-        setRecordatoriosPendientes(pendientes);
-        setRecordatoriosEnviados(enviados);
-      })
-      .catch(error => console.error('Error al obtener los datos:', error));
-  }, []);
-
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Recordatorios Pendientes</h1>
-        <ul>
-          {recordatoriosPendientes.length > 0 ? (
-            recordatoriosPendientes.map((recordatorio, index) => (
-              <li key={index}>
-                Cliente: {recordatorio.cliente.nombre}<br />
-                Mensaje: {recordatorio.mensaje}<br />
-                Fecha de Envío: {recordatorio.fecha_envio}
-              </li>
-            ))
-          ) : (
-            <p>No hay recordatorios pendientes.</p>
-          )}
-        </ul>
-
-        <h1>Recordatorios Enviados</h1>
-        <ul>
-          {recordatoriosEnviados.length > 0 ? (
-            recordatoriosEnviados.map((recordatorio, index) => (
-              <li key={index}>
-                Cliente: {recordatorio.cliente.nombre}<br />
-                Mensaje: {recordatorio.mensaje}<br />
-                Fecha de Envío: {recordatorio.fecha_envio}<br />
-                Estado: {recordatorio.enviado ? 'Enviado' : 'Pendiente'}
-              </li>
-            ))
-          ) : (
-            <p>No hay recordatorios enviados.</p>
-          )}
-        </ul>
-      </header>
-    </div>
+    <Router>
+      <Navbar />
+      <div className="flex">
+        <Sidebar />
+        <div className="content w-100">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/sucursales" element={<Sucursales />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            {' '}
+            {/* Dashboard */}
+            <Route path="/Recordatorios" element={<Recordatorios />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
   );
 }
 

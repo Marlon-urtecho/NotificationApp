@@ -12,14 +12,14 @@ admin.site.register(User, UserAdmin)
 
 # Registrar el modelo Sucursal
 class SucursalAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'direccion', 'telefono', 'email')  # Campos para mostrar en la lista
+    list_display = ('nombre', 'direccion', 'telefono', 'email', 'user')  # Agregar 'user' aquí
     search_fields = ('nombre', 'direccion', 'telefono')  # Campos que se pueden buscar en el admin
 
 admin.site.register(Sucursal, SucursalAdmin)
 
 # Registrar el modelo Cliente
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'telefono', 'placa', 'poliza', 'fecha_renovacion', 'precio', 'user', 'sucursal')  # Campos para mostrar
+    list_display = ('nombre', 'telefono', 'placa', 'poliza', 'fecha_renovacion', 'precio', 'sucursal')  # Eliminar 'user' de aquí
     search_fields = ('nombre', 'telefono', 'placa', 'poliza')  # Campos que se pueden buscar
     list_filter = ('sucursal', 'fecha_renovacion')  # Filtros para la lista
     ordering = ('fecha_renovacion',)  # Ordenar por fecha de renovación

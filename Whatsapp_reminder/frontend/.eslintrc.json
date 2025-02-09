@@ -12,22 +12,32 @@
     }
   },
   "env": {
-    "browser": true,  // Asegura que se reconozcan las variables globales del navegador
+    "browser": true,
     "node": true
   },
   "rules": {
     "react/prop-types": "off",
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
-    "max-len": ["off"],
-    "jsx-a11y/label-has-associated-control": ["off"],
-    "react/button-has-type": ["off"],
-    "no-multi-spaces": ["off"],
-    "react/jsx-props-no-multi-spaces": ["off"],  // Permite JSX en .js
+    "max-len": "off",
+    "jsx-a11y/label-has-associated-control": "off",
+    "react/button-has-type": "off",
+    "no-multi-spaces": "off",
+    "react/jsx-props-no-multi-spaces": "off",
     "import/no-extraneous-dependencies": [
       "error", 
       {
-        "devDependencies": ["**/setupTests.js", "**/*.test.js"] // Permitir en archivos de test
+        "devDependencies": ["**/setupTests.js", "**/*.test.js"]
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.js", "**/*.jsx"],
+      "rules": {
+        "react/jsx-a11y/label-has-associated-control": "off", // Desactivar regla conflictiva
+        "linebreak-style": ["off"],
+        "no-trailing-spaces": "off"
+      }
+    }
+  ]
 }

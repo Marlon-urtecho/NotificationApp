@@ -9,6 +9,7 @@ import Home from './Pages/Home';
 import Recordatorios from './Pages/Recordatorios';
 import Sucursales from './Pages/Sucursales';
 import Users from './Pages/Users';
+import ImportarClientes from './Pages/ImportarClientes';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/sucursales" element={<Sucursales />} />
             <Route path="/users" element={<Users />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/ImportarClientes" element={<ImportarClientes />} />
             {' '}
             {/* Dashboard */}
             <Route path="/Recordatorios" element={<Recordatorios />} />

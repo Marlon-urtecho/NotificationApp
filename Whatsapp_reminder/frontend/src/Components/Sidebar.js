@@ -68,6 +68,16 @@ function Sidebar() {
             Recordatorios
           </NavLink>
         </li>
+        <li>
+          <NavLink
+            to="/ImportarClientes"
+            className={({ isActive }) => `${isActive ? 'active' : ''} text-light rounded py-2 w-100 d-inline-block px-3`}
+          >
+            <FaChartLine className="me-2" />
+            {' '}
+            Importar Clientes
+          </NavLink>
+        </li>
       </ul>
     </div>
   );

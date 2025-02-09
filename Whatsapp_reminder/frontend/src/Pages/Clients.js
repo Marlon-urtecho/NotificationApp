@@ -3,7 +3,7 @@ import 'datatables.net'; // Importar DataTables
 import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css'; // Importar DataTable CSS
 import 'font-awesome/css/font-awesome.min.css'; // Importar Font Awesome
 import $ from 'jquery'; // Asegúrate de importar jQuery
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 function Clients() {
   const [clients, setClients] = useState([]); // Estado para almacenar los clientes

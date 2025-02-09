@@ -42,7 +42,7 @@ function Users() {
       return;
     }
 
-     // Verifica los datos antes de enviarlos
+    // Verifica los datos antes de enviarlos
 
     try {
       const response = await fetch('http://127.0.0.1:8000/AutoMensaje/v1/users/', {
@@ -54,7 +54,6 @@ function Users() {
       });
 
       if (response.ok) {
-        
         fetchUsers();
         setShowCreateModal(false);
         setNewUser({
@@ -196,66 +195,73 @@ function Users() {
             </div>
             <div className="modal-body">
               <div className="mb-3">
-                <label>Nombre de Usuario</label>
+                <label htmlFor="usuario">Nombre de Usuario</label>
                 <input
                   type="text"
                   className="form-control"
                   value={newUser.username}
                   onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                  id='usuario'
                 />
               </div>
               <div className="mb-3">
-                <label>Teléfono</label>
+                <label htmlFor="telefono" >Teléfono</label>
                 <input
                   type="text"
                   className="form-control"
                   value={newUser.phone_number}
                   onChange={(e) => setNewUser({ ...newUser, phone_number: e.target.value })}
+                  id="telefono"
                 />
               </div>
               <div className="mb-3">
-                <label>Email</label>
+                <label htmlFor="email" >Email</label>
                 <input
                   type="email"
                   className="form-control"
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  id="email"
                 />
               </div>
               <div className="mb-3">
-                <label>Primer Nombre</label>
+                <label htmlFor='nombre'>Primer Nombre</label>
                 <input
                   type="text"
                   className="form-control"
                   value={newUser.first_name}
                   onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
+                  id='nombre'
                 />
               </div>
               <div className="mb-3">
-                <label>Apellido</label>
+                <label htmlFor='apellido'>Apellido</label>
                 <input
                   type="text"
                   className="form-control"
                   value={newUser.last_name}
                   onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
+                  id='apellido'
                 />
               </div>
               <div className="mb-3">
-                <label>Es Staff</label>
+                <label htmlFor='staff'>Es Staff</label>
                 <input
                   type="checkbox"
                   className="form-check-input"
                   checked={newUser.is_staff}
                   onChange={(e) => setNewUser({ ...newUser, is_staff: e.target.checked })}
+                  id='staff'
                 />
               </div>
               <div className="mb-3">
-                <label>Está Activo</label>
+                <label htmlFor='activo'>Está Activo</label>
                 <input
                   type="checkbox"
                   className="form-check-input"
                   checked={newUser.is_active}
                   onChange={(e) => setNewUser({ ...newUser, is_active: e.target.checked })}
+                  id='activo'
                 />
               </div>
             </div>

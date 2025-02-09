@@ -1,8 +1,10 @@
 
 # Vista para el bot que interactua con el usuario
+from datetime import datetime
 from pyexpat.errors import messages
+from turtle import pd
 from venv import logger
-from .utils import enviar_whatsapp_twilio
+from .utils import enviar_whatsapp_twilio, enviar_whatsapp_bot
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -23,6 +25,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 import json
 from django.shortcuts import render
+from django.core.files.storage import default_storage
+import openpyxl
+import pandas as pd
+from django.db import transaction
+
 
 
 class SucursalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -204,7 +211,7 @@ def bot(request):
                 "5️⃣ Ubicación de oficinas\n"
                 "Escriba el número de la opción que desea consultar."
             )
-            enviar_whatsapp_twilio(sender_number, response_message)
+            enviar_whatsapp_bot(sender_number, response_message)
             return HttpResponse("Mensaje enviado", status=200)
         
         cliente = Cliente.objects.filter(telefono=sender_number).first() or Cliente.objects.filter(nombre__iexact=sender_name).first()
@@ -227,10 +234,133 @@ def bot(request):
                 "También puedes escribir *menu* para ver nuestras opciones de atención."
             )
 
-        enviar_whatsapp_twilio(sender_number, response_message)
+        enviar_whatsapp_bot(sender_number, response_message)
         return HttpResponse("Mensaje enviado", status=200)
     
     return HttpResponse("Método no permitido", status=405)
+
+
+@csrf_exempt
+@api_view(['POST'])
+def importar_clientes(request):
+    if request.method == 'POST':
+        if 'file' not in request.FILES:
+            return JsonResponse({'message': 'No se encontró un archivo en la solicitud'}, status=400)
+
+        file = request.FILES['file']
+
+        try:
+            # Verifica el tipo de archivo
+            if file.name.endswith('.xlsx') or file.name.endswith('.xls'):
+                # Leer solo las columnas relevantes desde B7 hasta G
+                df = pd.read_excel(file, header=6, usecols='B:G')
+            elif file.name.endswith('.csv'):
+                return JsonResponse({'message': 'El archivo debe ser Excel con las columnas en el rango especificado (B7:G7).'}, status=400)
+            else:
+                return JsonResponse({'message': 'El archivo debe ser Excel (.xlsx o .xls).'}, status=400)
+
+            # Validar las columnas esperadas
+            columnas_esperadas = ['Numero', 'Nombre', 'Placa', 'Poliza', 'Fecha_vence', 'Precio']
+            if not all(col in df.columns for col in columnas_esperadas):
+                return JsonResponse({'message': f'El archivo debe contener las columnas: {", ".join(columnas_esperadas)} en el rango B7:G7.'}, status=400)
+
+            # Convertir la columna 'Fecha_vence' a tipo datetime, manejando errores
+            df['Fecha_vence'] = pd.to_datetime(df['Fecha_vence'], errors='coerce')
+
+            clientes_importados = 0
+            clientes_omitidos = 0
+
+            # Usar transacción para asegurar consistencia
+            with transaction.atomic():
+                for _, row in df.iterrows():
+                    # Verificar si la fecha es válida
+                    if pd.isna(row['Fecha_vence']):
+                        continue
+
+                    # Validar y truncar valores según los límites de la base de datos
+                    cliente_data = {
+                        'telefono': str(row['Numero'])[:15],  # Ejemplo: máximo 15 caracteres
+                        'nombre': str(row['Nombre'])[:50],   # Ejemplo: máximo 50 caracteres
+                        'placa': str(row['Placa'])[:10],     # Ejemplo: máximo 10 caracteres
+                        'poliza': str(row['Poliza'])[:20],   # Ejemplo: máximo 20 caracteres
+                        'fecha_renovacion': row['Fecha_vence'],
+                        'precio': row['Precio'],
+                    }
+
+                    # Verificar si el cliente ya existe
+                    if Cliente.objects.filter(telefono=cliente_data['telefono']).exists():
+                        clientes_omitidos += 1
+                        continue
+
+                    # Crear cliente
+                    Cliente.objects.create(**cliente_data)
+                    clientes_importados += 1
+
+            return JsonResponse({
+                'message': 'Procesamiento completado.',
+                'clientes_importados': clientes_importados,
+                'clientes_omitidos': clientes_omitidos,
+            }, status=200)
+
+        except Exception as e:
+            return JsonResponse({'message': f'Error al procesar el archivo: {str(e)}'}, status=400)
+
+    return JsonResponse({'message': 'No se ha subido ningún archivo.'}, status=400)
+
+# para el inser de los clientes desde la fise de excel
+@csrf_exempt
+@api_view(['POST'])
+def importar_clientes_desde_b2(request):
+    if request.method == 'POST':
+        if 'file' not in request.FILES:
+            return JsonResponse({'message': 'No se encontró un archivo en la solicitud'}, status=400)
+
+        file = request.FILES['file']
+
+        try:
+            # Verifica el tipo de archivo
+            if file.name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file.name.endswith('.xlsx') or file.name.endswith('.xls'):
+                df = pd.read_excel(file)
+            else:
+                return JsonResponse({'message': 'El archivo debe ser CSV o Excel'}, status=400)
+
+            # Leer el rango específico de columnas
+            df = df.iloc[1:, 1:7]  # Rango B2:G2 (índices basados en cero)
+            df.columns = ['Telefono', 'Nombre', 'PLACA', 'POLIZA', 'Fecha_renovacion', 'precio']
+
+            # Validar que las columnas requeridas están presentes
+            columnas_requeridas = ['Telefono', 'Nombre', 'PLACA', 'POLIZA', 'Fecha_renovacion', 'precio']
+            for columna in columnas_requeridas:
+                if columna not in df.columns:
+                    return JsonResponse({'message': f'El archivo debe contener las columnas: {", ".join(columnas_requeridas)} en el rango B2:G2.'}, status=400)
+
+            # Procesar las filas del archivo
+            for _, row in df.iterrows():
+                cliente_data = {
+                    'telefono': row['Telefono'],
+                    'nombre': row['Nombre'],
+                    'placa': row['PLACA'] if pd.notna(row['PLACA']) else None,  # Permitir valores nulos en PLACA
+                    'poliza': row['POLIZA'],
+                    'fecha_renovacion': pd.to_datetime(row['Fecha_renovacion'], errors='coerce').date() if pd.notna(row['Fecha_renovacion']) else None,
+                    'precio': row['precio'],
+                }
+
+                # Verificar si el cliente ya existe en la base de datos por teléfono
+                if Cliente.objects.filter(telefono=cliente_data['telefono']).exists():
+                    continue  # Si ya existe, no crear el cliente nuevamente
+
+                # Crear el cliente
+                Cliente.objects.create(**cliente_data)
+
+            return JsonResponse({'message': 'Clientes importados correctamente'}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'message': f'Error al procesar el archivo: {str(e)}'}, status=400)
+
+    return JsonResponse({'message': 'No se ha subido ningún archivo.'}, status=400)
+
 
 
 @csrf_exempt

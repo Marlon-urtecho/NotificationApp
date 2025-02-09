@@ -33,10 +33,10 @@ class Sucursal(models.Model):
 class Cliente(models.Model):
     telefono = models.CharField(max_length=15)
     nombre = models.CharField(max_length=100)
-    placa = models.CharField(max_length=10, blank=True, null=True)  # Ahora puede ser nulo
+    placa = models.CharField(max_length=15, blank=True, null=True)  # Ahora puede ser nulo
     poliza = models.CharField(max_length=50)
     fecha_renovacion = models.DateField()
-    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    precio = models.DecimalField(max_digits=15, decimal_places=2)
     sucursal = models.ForeignKey(Sucursal, null=True, blank=True, on_delete=models.SET_NULL)  # Permitir nulo en sucursal
 
     def __str__(self):
@@ -49,4 +49,4 @@ class Recordatorio(models.Model):
     enviado = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Recordatorio: {self.mensaje} - {self.fecha_envio}"
+        return f"Recordatorio: {self.mensaje} - {self.fecha_envio}" 

@@ -35,6 +35,7 @@ urlpatterns = [
     path('AutoMensaje/v1/api/ejecutar-tareas/', views.ejecutar_tareas, name='ejecutar_tareas'),
     path('AutoMensaje/v1/api/recordatorios/', obtener_recordatorios, name='recordatorios'),
     path('api/ejecutar-tareas-nueva/', views.ejecutar_tareas_nueva, name='ejecutar_tareas_nueva'),
+    path('api/importar-clientes/', views.importar_clientes, name='importar_clientes'),
+    path('api/importar_clientes_desde_b2/', views.importar_clientes_desde_b2, name='importar_clientes_desde_b2'),
 ]
-
 

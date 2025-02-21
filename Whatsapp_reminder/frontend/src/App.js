@@ -1,5 +1,5 @@
-import React from 'react';
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Route, BrowserRouter as Router, Routes, Navigate } from 'react-router-dom';
 import './App.scss';
 import Navbar from './Components/Navbar';
 import Sidebar from './Components/Sidebar';
@@ -10,24 +10,26 @@ import Recordatorios from './Pages/Recordatorios';
 import Sucursales from './Pages/Sucursales';
 import Users from './Pages/Users';
 import ImportarClientes from './Pages/ImportarClientes';
+import Login from './Pages/Login';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   return (
     <Router>
-      <Navbar />
+      {isAuthenticated && <Navbar />}
       <div className="flex">
-        <Sidebar />
+        {isAuthenticated && <Sidebar />}
         <div className="content w-100">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/sucursales" element={<Sucursales />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/ImportarClientes" element={<ImportarClientes />} />
-            {' '}
-            {/* Dashboard */}
-            <Route path="/Recordatorios" element={<Recordatorios />} />
+            <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+            <Route path="/" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
+            <Route path="/clients" element={isAuthenticated ? <Clients /> : <Navigate to="/login" />} />
+            <Route path="/sucursales" element={isAuthenticated ? <Sucursales /> : <Navigate to="/login" />} />
+            <Route path="/users" element={isAuthenticated ? <Users /> : <Navigate to="/login" />} />
+            <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
+            <Route path="/ImportarClientes" element={isAuthenticated ? <ImportarClientes /> : <Navigate to="/login" />} />
+            <Route path="/recordatorios" element={isAuthenticated ? <Recordatorios /> : <Navigate to="/login" />} />
           </Routes>
         </div>
       </div>

@@ -6,6 +6,16 @@ const Sidebar = () => {
     return (
         <div className="sidebar bg-blue">
             <ul>
+            <li>
+                    <NavLink 
+                        to="Login/" 
+                        className={({ isActive }) => 
+                            `${isActive ? 'active' : ''} text-light rounded py-2 w-100 d-inline-block px-3`
+                        }
+                    >
+                        <FaHome className="me-2" /> Login
+                    </NavLink>
+                </li>
                 <li>
                     <NavLink 
                         to="/" 

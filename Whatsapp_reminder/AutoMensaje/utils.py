@@ -5,6 +5,8 @@ from datetime import timedelta, datetime
 from django.utils import timezone
 from .models import Cliente, Recordatorio
 from twilio.rest import Client
+import os
+from dotenv import load_dotenv
 
 
 logger = logging.getLogger(__name__)
@@ -38,11 +40,16 @@ def enviar_whatsapp_twilio(cliente, message):
     if telefono_cliente_formateado:
         account_sid = 'TWILIO_ACCOUNT_SID'
         auth_token = 'TWILIO_AUTH_TOKEN'  
+        account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+        auth_token = os.getenv('TWILIO_AUTH_TOKEN') # Tu Token de autenticación de Twilio
         client = Client(account_sid, auth_token)
 
         from_whatsapp_number = 'TWILIO_WHATSAPP_FROM' 
 
      
+        from_whatsapp_number = os.getenv('TWILIO_WHATSAPP_FROM')  # Número habilitado de Twilio para WhatsApp
+
+        # Verificamos que el número "From" y "To" no sean iguales
         if from_whatsapp_number != f'whatsapp:{telefono_cliente_formateado}':
             try:
                
@@ -73,10 +80,13 @@ def enviar_whatsapp_bot(to, message):
     if telefono_cliente:
         account_sid = 'TWILIO_ACCOUNT_SID'  # Tu SID de Twilio
         auth_token = 'TWILIO_AUTH_TOKEN'  # Tu Token de autenticación de Twilio
+        account_sid = 'TWILIO_ACCOUNT_SID'  # Tu SID de Twilio
+        auth_token = 'TWILIO_AUTH_TOKEN'  # Tu Token de autenticación de Twilio
         client = Client(account_sid, auth_token)
 
         # Número de WhatsApp de Twilio (remitente)
         from_whatsapp_number = 'TWILIO_WHATSAPP_FROM'
+        from_whatsapp_number = 'TWILIO_WHATSAPP_FROM'  # Número habilitado de Twilio para WhatsApp
 
         # Verificamos que el número de "From" y "To" no sean iguales
         if from_whatsapp_number != f'whatsapp:{telefono_cliente}':

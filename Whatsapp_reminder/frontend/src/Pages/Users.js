@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 const Users = () => {
-    const [users, setUsers] = useState([]); // Estado para almacenar los usuarios
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [newUser, setNewUser] = useState({
         username: '',
         phone_number: '',
@@ -10,40 +11,59 @@ const Users = () => {
         last_name: '',
         is_staff: false,
         is_active: true,
-    }); // Estado para el nuevo usuario
-    const [editingUser, setEditingUser] = useState(null); // Estado para el usuario que se va a editar
-    const [showCreateModal, setShowCreateModal] = useState(false); // Estado para mostrar el modal de creación
+        is_superuser: false,
+        password: '',
+        groups: ['Admin', 'Editor'],
+        user_permissions: ['add_user', 'change_user'],
+    });
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editUserDetails, setEditUserDetails] = useState(null);
 
-    // Función para obtener los usuarios desde el backend
     const fetchUsers = async () => {
+        setLoading(true);
         try {
             const response = await fetch('http://127.0.0.1:8000/AutoMensaje/v1/users/');
-            if (!response.ok) {
-                throw new Error('Error al cargar los usuarios');
-            }
+            if (!response.ok) throw new Error('Error al cargar los usuarios');
             const data = await response.json();
             setUsers(data);
         } catch (error) {
-            console.error('Error al cargar los usuarios:', error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const editUser = (user) => {
+        setEditUserDetails(user);
+        setShowEditModal(true);
+    };
+
+    const deleteUser = async (userId) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/AutoMensaje/v1/users/${userId}/`, {
+                method: 'DELETE',
+            });
+            if (!response.ok) {
+                throw new Error('Error al eliminar el usuario');
+            }
+            setUsers(users.filter(user => user.id !== userId));
+        } catch (error) {
+            console.error('Error al eliminar el usuario:', error);
         }
     };
 
     const createUser = async () => {
-        // Validaciones
-        if (!newUser.username || !newUser.phone_number || !newUser.email || !newUser.first_name || !newUser.last_name) {
-            alert("Todos los campos son obligatorios.");
+        // Validación de campos
+        if (!newUser.username || !newUser.password || !newUser.email) {
+            alert("Por favor, completa todos los campos requeridos.");
             return;
         }
-    
-         // Validación de teléfono (formato de Nicaragua: 8 dígitos, empieza con 2, 7, 8 o 9)
-        const phoneRegex = /^[2|7|8|9]{1}[0-9]{7}$/; // Formato de teléfono en Nicaragua
-        if (!phoneRegex.test(newUser.phone_number)) {
-        alert("El número de teléfono no es válido. Debe tener 8 dígitos y empezar con 2, 7, 8 o 9.");
-        return;
-        }
-    
-        console.log("Datos que se van a enviar:", newUser);  // Verifica los datos antes de enviarlos
-        
+
         try {
             const response = await fetch('http://127.0.0.1:8000/AutoMensaje/v1/users/', {
                 method: 'POST',
@@ -52,86 +72,60 @@ const Users = () => {
                 },
                 body: JSON.stringify(newUser),
             });
-    
-            if (response.ok) {
-                alert('Usuario creado');
-                fetchUsers();
-                setShowCreateModal(false);
-                setNewUser({
-                    username: '',
-                    phone_number: '',
-                    email: '',
-                    first_name: '',
-                    last_name: '',
-                    is_staff: false,
-                    is_active: true,
-                });
-            } else {
-                const errorDetails = await response.json();
-                console.error("Error:", errorDetails);
-                alert(`Error al crear el usuario: ${errorDetails.message}`);
+            if (!response.ok) {
+                throw new Error('Error al crear el usuario');
             }
+            const createdUser = await response.json();
+            setUsers([...users, createdUser]);
+            setShowCreateModal(false);
+            setNewUser({
+                username: '',
+                phone_number: '',
+                email: '',
+                first_name: '',
+                last_name: '',
+                password: '',
+                is_staff: false,
+                is_active: true,
+                is_superuser: false,
+                groups: [],
+                user_permissions: [],
+            });
         } catch (error) {
             console.error('Error al crear el usuario:', error);
         }
     };
-    
-    // Función para eliminar un usuario
-    const deleteUser = async (id) => {
-        if (window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
-            try {
-                const response = await fetch(`http://127.0.0.1:8000/AutoMensaje/v1/users/${id}/`, {
-                    method: 'DELETE',
-                });
-                if (response.ok) {
-                    alert('Usuario eliminado');
-                    fetchUsers();
-                } else {
-                    alert('Error al eliminar el usuario');
-                }
-            } catch (error) {
-                console.error('Error al eliminar el usuario:', error);
-            }
-        }
-    };
 
-    // Función para editar un usuario
-    const editUser = (user) => {
-        setEditingUser({ ...user });  // Creamos una copia del usuario para no modificar el original directamente
-    };
-
-    // Función para actualizar un usuario
     const updateUser = async () => {
-        if (editingUser) {
-            try {
-                const response = await fetch(`http://127.0.0.1:8000/AutoMensaje/v1/users/${editingUser.id}/`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(editingUser),
-                });
-                if (response.ok) {
-                    alert('Usuario actualizado');
-                    fetchUsers();
-                    setEditingUser(null);
-                } else {
-                    alert('Error al actualizar el usuario');
-                }
-            } catch (error) {
-                console.error('Error al actualizar el usuario:', error);
-            }
+        if (!editUserDetails.username || !editUserDetails.email) {
+            alert("Por favor, completa los campos requeridos.");
+            return;
+        }
+    
+        const userData = { ...editUserDetails };
+        if (!userData.password) {
+            delete userData.password; // No enviar contraseña si no fue modificada
+        }
+    
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/AutoMensaje/v1/users/${editUserDetails.id}/`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData),
+            });
+    
+            if (!response.ok) throw new Error('Error al actualizar el usuario');
+            const updatedUser = await response.json();
+            setUsers(users.map(user => (user.id === updatedUser.id ? updatedUser : user)));
+            setShowEditModal(false);
+        } catch (error) {
+            console.error('Error al actualizar el usuario:', error);
         }
     };
-
-    // Usamos useEffect para cargar los usuarios cuando la página se monte
-    useEffect(() => {
-        fetchUsers();
-    }, []);
 
     return (
         <div className="container mt-4">
-            <h1>Usuarios</h1>
+            <h1 className="textoCenter">Administración de Usuarios</h1>
             <button
                 className="btn btn-sm btn-success mb-3"
                 onClick={() => setShowCreateModal(true)}
@@ -148,7 +142,12 @@ const Users = () => {
                         <th>Email</th>
                         <th>Activo</th>
                         <th>Staff</th>
-                        <th>Opciones</th>
+                        <th>Super Usuario</th>
+                        <th>Grupos</th>
+                        <th>Permisos</th>
+                        <th>Fecha Creación</th>
+                        <th>Fecha Última Actualización</th>
+                        <th className="flexbtn">Opciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -161,7 +160,16 @@ const Users = () => {
                                 <td>{user.email}</td>
                                 <td>{user.is_active ? 'Sí' : 'No'}</td>
                                 <td>{user.is_staff ? 'Sí' : 'No'}</td>
+                                <td>{user.is_superuser ? 'Sí' : 'No'}</td>
                                 <td>
+                                    {user.groups && user.groups.length > 0 ? user.groups.join(', ') : 'Sin grupos'}
+                                </td>
+                                <td>
+                                    {user.user_permissions && user.user_permissions.length > 0 ? user.user_permissions.join(', ') : 'Sin permisos'}
+                                </td>
+                                <td>{new Date(user.date_joined).toLocaleDateString()}</td>
+                                <td>{new Date(user.last_login).toLocaleDateString()}</td>
+                                <td className="flexbtn">
                                     <button
                                         className="btn btn-sm btn-primary"
                                         onClick={() => editUser(user)}
@@ -179,22 +187,22 @@ const Users = () => {
                         ))
                     ) : (
                         <tr>
-                            <td colSpan="7" className="text-center">Cargando...</td>
+                            <td colSpan="12" className="text-center">Cargando...</td>
                         </tr>
                     )}
                 </tbody>
             </table>
 
-            {/* Modal de Creación de Usuario */}
             {showCreateModal && (
                 <div className="modal" style={{ display: 'block' }}>
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Crear Nuevo Usuario</h5>
-                                <button className="btn-close" onClick={() => setShowCreateModal(false)}></button>
+                                <button className="btn-close" onClick={() => setShowCreateModal(false)} />
                             </div>
                             <div className="modal-body">
+                                {/* Nombre de Usuario */}
                                 <div className="mb-3">
                                     <label>Nombre de Usuario</label>
                                     <input
@@ -204,6 +212,19 @@ const Users = () => {
                                         onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Contraseña */}
+                                <div className="mb-3">
+                                    <label>Contraseña</label>
+                                    <input
+                                        type="password"
+                                        className="form-control"
+                                        value={newUser.password}
+                                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                    />
+                                </div>
+
+                                {/* Teléfono */}
                                 <div className="mb-3">
                                     <label>Teléfono</label>
                                     <input
@@ -213,6 +234,8 @@ const Users = () => {
                                         onChange={(e) => setNewUser({ ...newUser, phone_number: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Email */}
                                 <div className="mb-3">
                                     <label>Email</label>
                                     <input
@@ -222,8 +245,10 @@ const Users = () => {
                                         onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Nombre */}
                                 <div className="mb-3">
-                                    <label>Primer Nombre</label>
+                                    <label>Nombre</label>
                                     <input
                                         type="text"
                                         className="form-control"
@@ -231,6 +256,8 @@ const Users = () => {
                                         onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Apellido */}
                                 <div className="mb-3">
                                     <label>Apellido</label>
                                     <input
@@ -240,6 +267,8 @@ const Users = () => {
                                         onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Es Staff */}
                                 <div className="mb-3">
                                     <label>Es Staff</label>
                                     <input
@@ -249,8 +278,10 @@ const Users = () => {
                                         onChange={(e) => setNewUser({ ...newUser, is_staff: e.target.checked })}
                                     />
                                 </div>
+
+                                {/* Es Activo */}
                                 <div className="mb-3">
-                                    <label>Está Activo</label>
+                                    <label>Es Activo</label>
                                     <input
                                         type="checkbox"
                                         className="form-check-input"
@@ -258,13 +289,61 @@ const Users = () => {
                                         onChange={(e) => setNewUser({ ...newUser, is_active: e.target.checked })}
                                     />
                                 </div>
+
+                                {/* Es Super Usuario */}
+                                <div className="mb-3">
+                                    <label>Es Super Usuario</label>
+                                    <input
+                                        type="checkbox"
+                                        className="form-check-input"
+                                        checked={newUser.is_superuser}
+                                        onChange={(e) => setNewUser({ ...newUser, is_superuser: e.target.checked })}
+                                    />
+                                </div>
+
+                                {/* Grupos: Select con opciones */}
+                                <div className="mb-3">
+                                    <label>Grupos</label>
+                                    <select
+                                        multiple
+                                        className="form-control"
+                                        value={newUser.groups}
+                                        onChange={(e) => setNewUser({ 
+                                            ...newUser, 
+                                            groups: Array.from(e.target.selectedOptions, option => option.value) 
+                                        })}
+                                    >
+                                        <option value="Admin">Admin</option>
+                                        <option value="Editor">Editor</option>
+                                        <option value="Viewer">Viewer</option>
+                                    </select>
+                                </div>
+
+                                {/* Permisos: Select con opciones */}
+                                <div className="mb-3">
+                                    <label>Permisos</label>
+                                    <select
+                                        multiple
+                                        className="form-control"
+                                        value={newUser.user_permissions}
+                                        onChange={(e) => setNewUser({ 
+                                            ...newUser, 
+                                            user_permissions: Array.from(e.target.selectedOptions, option => option.value) 
+                                        })}
+                                    >
+                                        <option value="add_user">add_user</option>
+                                        <option value="change_user">change_user</option>
+                                        <option value="delete_user">delete_user</option>
+                                    </select>
+                                </div>
                             </div>
+
                             <div className="modal-footer">
                                 <button className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
                                     Cancelar
                                 </button>
                                 <button className="btn btn-primary" onClick={createUser}>
-                                    Crear Usuario
+                                    Crear
                                 </button>
                             </div>
                         </div>
@@ -272,86 +351,157 @@ const Users = () => {
                 </div>
             )}
 
-            {/* Modal de Edición de Usuario */}
-            {editingUser && (
+            {showEditModal && editUserDetails && (
                 <div className="modal" style={{ display: 'block' }}>
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Editar Usuario</h5>
-                                <button className="btn-close" onClick={() => setEditingUser(null)}></button>
+                                <button className="btn-close" onClick={() => setShowEditModal(false)} />
                             </div>
                             <div className="modal-body">
+                                {/* Nombre de Usuario */}
                                 <div className="mb-3">
                                     <label>Nombre de Usuario</label>
                                     <input
                                         type="text"
                                         className="form-control"
-                                        value={editingUser.username}
-                                        onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
+                                        value={editUserDetails.username}
+                                        onChange={(e) => setEditUserDetails({ ...editUserDetails, username: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Contraseña */}
+                                <div className="mb-3">
+                                    <label>Contraseña</label>
+                                    <input
+                                        type="password"
+                                        className="form-control"
+                                        value={editUserDetails.password}
+                                        onChange={(e) => setEditUserDetails({ ...editUserDetails, password: e.target.value })}
+                                    />
+                                </div>
+
+                                {/* Teléfono */}
                                 <div className="mb-3">
                                     <label>Teléfono</label>
                                     <input
                                         type="text"
                                         className="form-control"
-                                        value={editingUser.phone_number}
-                                        onChange={(e) => setEditingUser({ ...editingUser, phone_number: e.target.value })}
+                                        value={editUserDetails.phone_number}
+                                        onChange={(e) => setEditUserDetails({ ...editUserDetails, phone_number: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Email */}
                                 <div className="mb-3">
                                     <label>Email</label>
                                     <input
                                         type="email"
                                         className="form-control"
-                                        value={editingUser.email}
-                                        onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                                        value={editUserDetails.email}
+                                        onChange={(e) => setEditUserDetails({ ...editUserDetails, email: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Nombre */}
                                 <div className="mb-3">
-                                    <label>Primer Nombre</label>
+                                    <label>Nombre</label>
                                     <input
                                         type="text"
                                         className="form-control"
-                                        value={editingUser.first_name}
-                                        onChange={(e) => setEditingUser({ ...editingUser, first_name: e.target.value })}
+                                        value={editUserDetails.first_name}
+                                        onChange={(e) => setEditUserDetails({ ...editUserDetails, first_name: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Apellido */}
                                 <div className="mb-3">
                                     <label>Apellido</label>
                                     <input
                                         type="text"
                                         className="form-control"
-                                        value={editingUser.last_name}
-                                        onChange={(e) => setEditingUser({ ...editingUser, last_name: e.target.value })}
+                                        value={editUserDetails.last_name}
+                                        onChange={(e) => setEditUserDetails({ ...editUserDetails, last_name: e.target.value })}
                                     />
                                 </div>
+
+                                {/* Es Staff */}
                                 <div className="mb-3">
                                     <label>Es Staff</label>
                                     <input
                                         type="checkbox"
                                         className="form-check-input"
-                                        checked={editingUser.is_staff}
-                                        onChange={(e) => setEditingUser({ ...editingUser, is_staff: e.target.checked })}
+                                        checked={editUserDetails.is_staff}
+                                        onChange={(e) => setEditUserDetails({ ...editUserDetails, is_staff: e.target.checked })}
                                     />
                                 </div>
+
+                                {/* Es Activo */}
                                 <div className="mb-3">
-                                    <label>Está Activo</label>
+                                    <label>Es Activo</label>
                                     <input
                                         type="checkbox"
                                         className="form-check-input"
-                                        checked={editingUser.is_active}
-                                        onChange={(e) => setEditingUser({ ...editingUser, is_active: e.target.checked })}
+                                        checked={editUserDetails.is_active}
+                                        onChange={(e) => setEditUserDetails({ ...editUserDetails, is_active: e.target.checked })}
                                     />
                                 </div>
+
+                                {/* Es Super Usuario */}
+                                <div className="mb-3">
+                                    <label>Es Super Usuario</label>
+                                    <input
+                                        type="checkbox"
+                                        className="form-check-input"
+                                        checked={editUserDetails.is_superuser}
+                                        onChange={(e) => setEditUserDetails({ ...editUserDetails, is_superuser: e.target.checked })}
+                                    />
+                                </div>
+
+                                {/* Grupos: Select con opciones */}
+                                <div className="mb-3">
+                                    <label>Grupos</label>
+                                    <select
+                                        multiple
+                                        className="form-control"
+                                        value={editUserDetails.groups}
+                                        onChange={(e) => setEditUserDetails({
+                                            ...editUserDetails,
+                                            groups: Array.from(e.target.selectedOptions, option => option.value)
+                                        })}
+                                    >
+                                        <option value="Admin">Admin</option>
+                                        <option value="Editor">Editor</option>
+                                        <option value="Viewer">Viewer</option>
+                                    </select>
+                                </div>
+
+                                {/* Permisos: Select con opciones */}
+                                <div className="mb-3">
+                                    <label>Permisos</label>
+                                    <select
+                                        multiple
+                                        className="form-control"
+                                        value={editUserDetails.user_permissions}
+                                        onChange={(e) => setEditUserDetails({
+                                            ...editUserDetails,
+                                            user_permissions: Array.from(e.target.selectedOptions, option => option.value)
+                                        })}
+                                    >
+                                        <option value="add_user">add_user</option>
+                                        <option value="change_user">change_user</option>
+                                        <option value="delete_user">delete_user</option>
+                                    </select>
+                                </div>
+
                             </div>
                             <div className="modal-footer">
-                                <button className="btn btn-secondary" onClick={() => setEditingUser(null)}>
+                                <button className="btn btn-secondary" onClick={() => setShowEditModal(false)}>
                                     Cancelar
                                 </button>
                                 <button className="btn btn-primary" onClick={updateUser}>
-                                    Actualizar Usuario
+                                    Actualizar
                                 </button>
                             </div>
                         </div>

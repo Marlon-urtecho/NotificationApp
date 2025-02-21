@@ -63,6 +63,12 @@ $gray: #e7e9eb;
   background: $Light !important;
   padding: 1rem 2rem;
   border-bottom: 1px solid $gray;
+
+  a{
+    color: white;
+    font-size: x-large;
+    
+  }
 }
 
 .container-fluid{
@@ -106,3 +112,28 @@ $gray: #e7e9eb;
 .bg-blue{
   background: $Light !important;
 }
+
+
+// felx par lo botones 
+.flexbtn{
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+// Estilo de barra de busqueda 
+div.dt-container {
+div.dt-search {
+  input {
+    margin-left: .5em;
+    display: inline-block;
+    width: 20rem ;
+    height: 2rem ;
+  }
+}
+}
+
+.textoCenter{
+  text-align: center;
+}
+

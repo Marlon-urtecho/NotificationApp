@@ -6,7 +6,6 @@ from venv import logger
 from .utils import enviar_whatsapp_twilio, enviar_whatsapp_bot
 from rest_framework import viewsets
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
 from .models import Cliente, Recordatorio, User, Sucursal
 from .serializers import ClienteSerializer, RecordatorioSerializer, UserSerializer, SucursalSerializer
@@ -20,7 +19,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 import json
 from django.shortcuts import render
@@ -28,8 +26,34 @@ from django.core.files.storage import default_storage
 import openpyxl
 import pandas as pd
 from django.db import transaction
+from django.contrib.auth.models import Group, Permission
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 
+class CustomTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        # Obtenemos el username y password del request
+        username = request.data.get('username')
+        password = request.data.get('password')
 
+        # Verificamos que las credenciales sean correctas
+        try:
+            user = User.objects.get(username=username)  # Aquí estamos usando 'username'
+            if user.check_password(password):
+                # Si las credenciales son correctas, creamos el refresh token y el access token
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    "token": str(refresh.access_token),  # Access token
+                    "refresh_token": str(refresh),  # Refresh token
+                })
+            else:
+                return Response({"error": "Credenciales inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
+        except User.DoesNotExist:
+            return Response({"error": "Credenciales inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
+    
 
 class SucursalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Sucursal.objects.all()
@@ -123,10 +147,11 @@ class SucursalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Sucursal.objects.all()
     serializer_class = SucursalSerializer
 
-    
-def list_users(request):
-    users = User.objects.all()
-    users_data = [{
+
+
+# Serializador de User para obtener toda la información del usuario
+def user_to_dict(user):
+    return {
         'id': user.id,
         'username': user.username,
         'phone_number': user.phone_number,
@@ -134,27 +159,64 @@ def list_users(request):
         'first_name': user.first_name,
         'last_name': user.last_name,
         'is_staff': user.is_staff,
-        'is_active': user.is_active
-    } for user in users]
+        'is_active': user.is_active,
+        'is_superuser': user.is_superuser,
+        'groups': [group.name for group in user.groups.all()],
+        'user_permissions': [perm.name for perm in user.user_permissions.all()],
+    }
+   
+# Listar todos los usuarios
+def list_users(request):
+    users = User.objects.all()
+    users_data = [user_to_dict(user) for user in users]
     return JsonResponse(users_data, safe=False)
-
+# Crear un nuevo usuario
+@csrf_exempt
 def create_user(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
+
+            # Crear el usuario
             user = User.objects.create(
                 username=data['username'],
+                password=data['password'],  # Asegurarse de encriptar la contraseña
                 phone_number=data['phone_number'],
                 email=data['email'],
                 first_name=data['first_name'],
                 last_name=data['last_name'],
                 is_staff=data['is_staff'],
-                is_active=data['is_active']
+                is_active=data['is_active'],
+                is_superuser=data.get('is_superuser', False),
             )
-            return JsonResponse({'message': 'Usuario creado exitosamente'}, status=201)
+
+            # Asignar grupos por nombre
+            if 'groups' in data:
+                group_names = data['groups']
+                groups = Group.objects.filter(name__in=group_names)  # Filtrar por nombre
+                if groups.count() != len(group_names):
+                    return JsonResponse({'error': 'Algunos grupos no existen'}, status=400)
+                user.groups.set(groups)
+
+            # Asignar permisos por nombre
+            if 'user_permissions' in data:
+                permission_names = data['user_permissions']
+                permissions = Permission.objects.filter(name__in=permission_names)  # Filtrar por nombre
+                if permissions.count() != len(permission_names):
+                    return JsonResponse({'error': 'Algunos permisos no existen'}, status=400)
+                user.user_permissions.set(permissions)
+
+            user.save()
+
+            return JsonResponse({'message': 'Usuario creado exitosamente', 'user': user_to_dict(user)}, status=201)
         except KeyError as e:
             return JsonResponse({'error': f'Faltan campos: {e}'}, status=400)
-        
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+
+# Actualizar un usuario
+@csrf_exempt
 def update_user(request, id):
     try:
         user = User.objects.get(id=id)
@@ -164,27 +226,53 @@ def update_user(request, id):
     if request.method == 'PUT':
         try:
             data = json.loads(request.body)
+
+            # Actualizar los campos del usuario
             user.username = data.get('username', user.username)
+            user.password = data.get('password', user.password)
             user.phone_number = data.get('phone_number', user.phone_number)
             user.email = data.get('email', user.email)
             user.first_name = data.get('first_name', user.first_name)
             user.last_name = data.get('last_name', user.last_name)
             user.is_staff = data.get('is_staff', user.is_staff)
             user.is_active = data.get('is_active', user.is_active)
+            user.is_superuser = data.get('is_superuser', user.is_superuser)
+
+            # Actualizar grupos por nombre
+            if 'groups' in data:
+                group_names = data['groups']
+                groups = Group.objects.filter(name__in=group_names)  # Filtrar por nombre
+                if groups.count() != len(group_names):
+                    return JsonResponse({'error': 'Algunos grupos no existen'}, status=400)
+                user.groups.set(groups)
+
+            # Actualizar permisos por nombre
+            if 'user_permissions' in data:
+                permission_names = data['user_permissions']
+                permissions = Permission.objects.filter(name__in=permission_names)  # Filtrar por nombre
+                if permissions.count() != len(permission_names):
+                    return JsonResponse({'error': 'Algunos permisos no existen'}, status=400)
+                user.user_permissions.set(permissions)
+
             user.save()
 
-            return JsonResponse({'message': 'Usuario actualizado exitosamente'}, status=200)
+            return JsonResponse({'message': 'Usuario actualizado exitosamente', 'user': user_to_dict(user)}, status=200)
         except KeyError as e:
             return JsonResponse({'error': f'Faltan campos: {e}'}, status=400)
-        
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
 
+
+# Eliminar un usuario
+@csrf_exempt
 def delete_user(request, id):
     try:
         user = User.objects.get(id=id)
         user.delete()
         return JsonResponse({'message': 'Usuario eliminado exitosamente'}, status=204)
     except User.DoesNotExist:
-        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)       
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)     
+     
 
 def enviar_bienvenida(request):
     enviar_mensajes_bienvenida.apply_async()
@@ -239,8 +327,6 @@ def bot(request):
     return HttpResponse("Método no permitido", status=405)
 
 
-
-
 @csrf_exempt
 @api_view(['POST'])
 def importar_clientes(request):
@@ -269,6 +355,7 @@ def importar_clientes(request):
             df['Fecha_vence'] = pd.to_datetime(df['Fecha_vence'], errors='coerce')
 
             clientes_importados = 0
+            clientes_actualizados = 0
             clientes_omitidos = 0
 
             # Usar transacción para asegurar consistencia
@@ -288,18 +375,40 @@ def importar_clientes(request):
                         'precio': row['Precio'],
                     }
 
-                    # Verificar si el cliente ya existe
-                    if Cliente.objects.filter(telefono=cliente_data['telefono']).exists():
-                        clientes_omitidos += 1
-                        continue
+                    # Buscar cliente primero por teléfono, si no se encuentra, buscar por nombre
+                    cliente = Cliente.objects.filter(telefono=cliente_data['telefono']).first()
 
-                    # Crear cliente
-                    Cliente.objects.create(**cliente_data)
-                    clientes_importados += 1
+                    if not cliente:
+                        cliente = Cliente.objects.filter(nombre=cliente_data['nombre']).first()
+
+                    if cliente:
+                        # Verificar si alguno de los datos es diferente y actualizar
+                        if (cliente.poliza != cliente_data['poliza'] or
+                            cliente.placa != cliente_data['placa'] or
+                            cliente.fecha_renovacion != cliente_data['fecha_renovacion'] or
+                            cliente.precio != cliente_data['precio'] or
+                            cliente.telefono != cliente_data['telefono']):
+                            
+                            # Actualizar los campos si son diferentes
+                            cliente.telefono = cliente_data['telefono']
+                            cliente.nombre = cliente_data['nombre']
+                            cliente.placa = cliente_data['placa']
+                            cliente.poliza = cliente_data['poliza']
+                            cliente.fecha_renovacion = cliente_data['fecha_renovacion']
+                            cliente.precio = cliente_data['precio']
+                            cliente.save()
+                            clientes_actualizados += 1
+                        else:
+                            clientes_omitidos += 1
+                    else:
+                        # Crear cliente si no existe
+                        Cliente.objects.create(**cliente_data)
+                        clientes_importados += 1
 
             return JsonResponse({
                 'message': 'Procesamiento completado.',
                 'clientes_importados': clientes_importados,
+                'clientes_actualizados': clientes_actualizados,
                 'clientes_omitidos': clientes_omitidos,
             }, status=200)
 
@@ -309,7 +418,6 @@ def importar_clientes(request):
     return JsonResponse({'message': 'No se ha subido ningún archivo.'}, status=400)
 
 # para el inser de los clientes desde la fise de excel
-
 @csrf_exempt
 @api_view(['POST'])
 def importar_clientes_desde_b2(request):
@@ -338,6 +446,11 @@ def importar_clientes_desde_b2(request):
                 if columna not in df.columns:
                     return JsonResponse({'message': f'El archivo debe contener las columnas: {", ".join(columnas_requeridas)} en el rango B2:G2.'}, status=400)
 
+            # Contadores para el resultado
+            clientes_importados = 0
+            clientes_actualizados = 0
+            clientes_omitidos = 0
+
             # Procesar las filas del archivo
             for _, row in df.iterrows():
                 cliente_data = {
@@ -348,21 +461,47 @@ def importar_clientes_desde_b2(request):
                     'fecha_renovacion': pd.to_datetime(row['Fecha_renovacion'], errors='coerce').date() if pd.notna(row['Fecha_renovacion']) else None,
                     'precio': row['precio'],
                 }
+                # Buscar cliente primero por teléfono, si no se encuentra, buscar por nombre
+                cliente = Cliente.objects.filter(telefono=cliente_data['telefono']).first()
 
-                # Verificar si el cliente ya existe en la base de datos por teléfono
-                if Cliente.objects.filter(telefono=cliente_data['telefono']).exists():
-                    continue  # Si ya existe, no crear el cliente nuevamente
+                if not cliente:
+                    cliente = Cliente.objects.filter(nombre=cliente_data['nombre']).first()
 
-                # Crear el cliente
-                Cliente.objects.create(**cliente_data)
+                if cliente:
+                    # Si el cliente existe, verificar si algún dato ha cambiado
+                    if (cliente.poliza != cliente_data['poliza'] or
+                        cliente.placa != cliente_data['placa'] or
+                        cliente.fecha_renovacion != cliente_data['fecha_renovacion'] or
+                        cliente.precio != cliente_data['precio'] or
+                        cliente.telefono != cliente_data['telefono']):
+                        
+                        # Actualizar los datos del cliente si alguno de los valores ha cambiado
+                        cliente.telefono = cliente_data['telefono']
+                        cliente.nombre = cliente_data['nombre']
+                        cliente.placa = cliente_data['placa']
+                        cliente.poliza = cliente_data['poliza']
+                        cliente.fecha_renovacion = cliente_data['fecha_renovacion']
+                        cliente.precio = cliente_data['precio']
+                        cliente.save()
+                        clientes_actualizados += 1
+                    else:
+                        clientes_omitidos += 1
+                else:
+                    # Crear el cliente si no existe
+                    Cliente.objects.create(**cliente_data)
+                    clientes_importados += 1
 
-            return JsonResponse({'message': 'Clientes importados correctamente'}, status=200)
+            return JsonResponse({
+                'message': 'Procesamiento completado.',
+                'clientes_importados': clientes_importados,
+                'clientes_actualizados': clientes_actualizados,
+                'clientes_omitidos': clientes_omitidos,
+            }, status=200)
 
         except Exception as e:
             return JsonResponse({'message': f'Error al procesar el archivo: {str(e)}'}, status=400)
 
     return JsonResponse({'message': 'No se ha subido ningún archivo.'}, status=400)
-
 
 
 @csrf_exempt

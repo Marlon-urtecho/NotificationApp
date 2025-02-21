@@ -3,9 +3,42 @@ from .models import Cliente, Recordatorio
 from .models import User, Sucursal
 
 class UserSerializer(serializers.ModelSerializer):
+    # Puedes incluir el teléfono que agregaste
     class Meta:
         model = User
-        fields = ['id', 'username', 'phone_number', 'email', 'first_name', 'last_name', 'is_staff', 'is_active']
+        fields = [
+            'id',
+            'username',  # Nombre de usuario único
+            'password',  # Contraseña (se recomienda cifrado en el backend)
+            'email',  # Correo electrónico
+            'first_name',  # Nombre
+            'last_name',  # Apellido
+            'phone_number',  # El teléfono que agregaste
+            'is_active',  # Para saber si está activo
+            'is_staff',  # Para saber si es personal del sitio
+            'is_superuser',  # Para saber si tiene permisos completos
+            'groups',  # Relación con grupos
+            'user_permissions'  # Permisos del usuario
+        ]
+        
+    def create(self, validated_data):
+        # Asegúrate de encriptar la contraseña antes de guardar
+        password = validated_data.pop('password', None)
+        user = super().create(validated_data)
+        if password:
+            user.set_password(password)  # Establece la contraseña de forma segura
+            user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        # En caso de que quieras actualizar la contraseña
+        password = validated_data.pop('password', None)
+        instance = super().update(instance, validated_data)
+        if password:
+            instance.set_password(password)
+            instance.save()
+        return instance
+
 
 class ClienteSerializer(serializers.ModelSerializer):
     sucursal = serializers.StringRelatedField()  # Asegúrate de que esto esté bien dependiendo de tu modelo

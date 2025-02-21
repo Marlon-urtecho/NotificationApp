@@ -2,10 +2,13 @@ import 'bootstrap/dist/css/bootstrap.min.css'; // Importar Bootstrap
 import 'datatables.net'; // Importar DataTables
 import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css'; // Importar DataTable CSS
 import 'font-awesome/css/font-awesome.min.css'; // Importar Font Awesome
-import $ from 'jquery'; // Asegúrate de importar jQuery
-import React, { useEffect, useState, useRef } from 'react';
+import $ from 'jquery'; // Asegúrate de importar jQuery;
+import 'jszip'; // Para la exportación CSV, Excel, etc.
+import 'pdfmake/build/pdfmake'; // Para la exportación a PDF
+import 'pdfmake/build/vfs_fonts'; // Para las fuentes de PDF
+import React, { useEffect, useRef, useState } from 'react';
 
-const Clients = () => {
+function Clients() {
     const [clients, setClients] = useState([]); // Estado para almacenar los clientes
     const [dataTable, setDataTable] = useState(null); // Estado para almacenar la instancia de DataTable
     const [sucursales, setSucursales] = useState([]); // Estado para almacenar las sucursales
@@ -15,12 +18,32 @@ const Clients = () => {
 
     const dataTableOptions = {
         columnDefs: [
-            { className: 'centered', targets: [0, 1, 2, 3, 4, 5, 6, 7] },
-            { orderable: false, targets: [6, 7] },
-            { searchable: false, targets: [0, 6, 7] }
+            { className: 'text-center', targets: [0, 1, 2, 3] },
+            { orderable: false, targets: [4] },
+            { searchable: false, targets: [5, 6] }
         ],
-        pageLength: 4,
-        destroy: true
+        pageLength: 10,
+        destroy: true,
+        dom: 'Bfrtip', // Asegúrate de que los botones estén en el DOM
+        buttons: [
+            'copy', 
+            'csv', 
+            'excel', 
+            'pdf', 
+            'print'
+        ],
+        language: {
+            search: "Buscar:",
+            lengthMenu: "Mostrar _MENU_ registros por página",
+            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            paginate: {
+                first: "Primero",
+                last: "Último",
+                next: "Siguiente",
+                previous: "Anterior"
+            },
+            emptyTable: "No hay datos disponibles"
+        }
     };
 
     // Referencia para la tabla
@@ -194,16 +217,16 @@ const Clients = () => {
         <div className="container mt-4">
             <div className="row">
                 <div className="col-12">
-                    <h2>Administración de Clientes</h2>
+                    <h2 className="textoCenter" >Administración de Clientes</h2>
                     <div className="table-responsive">
                         <button
                             className="btn btn-sm btn-success mb-3"
                             onClick={() => setShowCreateModal(true)}
                         >
-                            <i className="fa-solid fa-plus"></i> Crear Nuevo Cliente
+                            <i className="fa-solid "></i> + Crear Nuevo Cliente
                         </button>
                         <table ref={tableRef} id="datatable-clients" className="table">
-                            <caption>Clientes desde Django + DataTable.js</caption>
+                            <caption>Clientes desde la base de Datos y Django</caption>
                             <thead>
                                 <tr>
                                     <th className="centered">#</th>
@@ -214,7 +237,7 @@ const Clients = () => {
                                     <th className="centered">Fecha de Renovación</th>
                                     <th className="centered">Precio</th>
                                     <th className="centered">Sucursal</th>
-                                    <th className="centered">Opciones</th>
+                                    <th className="centered flexbtn">Opciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -229,18 +252,20 @@ const Clients = () => {
                                             <td>{client.fecha_renovacion}</td>
                                             <td>{client.precio}</td>
                                             <td>{client.sucursal ? client.sucursal.nombre : 'No asignada'}</td>
-                                            <td>
+                                            <td className='flexbtn'>
                                                 <button
                                                     className="btn btn-sm btn-primary"
                                                     onClick={() => editClient(client)}
-                                                >Actualizar
-                                                    <i className="fa-solid fa-pencil"></i>
+                                                >
+                                                        Actualizar
+                                                    <i className="fa-solid fa-pen-to-square me-1"></i>
                                                 </button>
                                                 <button
                                                     className="btn btn-sm btn-danger"
                                                     onClick={() => deleteClient(client.id)}
-                                                >Borrar
-                                                    <i className="fa-solid fa-trash-can"></i>
+                                                >
+                                                    Borrar
+                                                    <i className="fa-solid fa-trash-can me-1"></i>
                                                 </button>
                                             </td>
                                         </tr>
@@ -448,7 +473,7 @@ const Clients = () => {
                 </div>
             )}
         </div>
-    );
-};
+  );
+}
 
 export default Clients;

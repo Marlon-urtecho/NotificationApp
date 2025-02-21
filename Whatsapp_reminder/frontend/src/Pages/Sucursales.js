@@ -17,10 +17,10 @@ const Sucursales = () => {
     const dataTableOptions = {
         columnDefs: [
             { className: 'centered', targets: [0, 1, 2, 3, 4] },
-            { orderable: false, targets: [4] },
+            { orderable: false, targets: [6] },
             { searchable: false, targets: [0, 4] }
         ],
-        pageLength: 4,
+        pageLength: 5,
         destroy: true
     };
 
@@ -192,13 +192,13 @@ const createSucursal = async () => {
         <div className="container mt-4">
             <div className="row">
                 <div className="col-12">
-                    <h2>Administración de Sucursales</h2>
+                    <h2  className="textoCenter">Administración de Sucursales</h2>
                     <div className="table-responsive">
                         <button
                             className="btn btn-sm btn-success mb-3"
                             onClick={() => setShowCreateModal(true)}
                         >
-                            <i className="fa-solid fa-plus"></i> Crear Nueva Sucursal
+                            <i className="fa-solid "></i> Crear Nueva Sucursal
                         </button>
                         <table id="datatable-sucursales" className="table">
                             <caption>Sucursales desde Django + DataTable.js</caption>
@@ -210,7 +210,7 @@ const createSucursal = async () => {
                                     <th className="centered">Teléfono</th>
                                     <th className="centered">Email</th>
                                     <th className="centered">Usuario</th>
-                                    <th className="centered">Opciones</th>
+                                    <th className="centered flexbtn">Opciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -229,13 +229,13 @@ const createSucursal = async () => {
                                                     'No asignado'
                                                 )}
                                             </td>
-                                            <td>
+                                            <td className='flexbtn'>
                                                 <button
                                                     className="btn btn-sm btn-primary"
                                                     onClick={() => editSucursal(sucursal)}
                                                 >
                                                     Actualizar
-                                                    <i className="fa-solid fa-pencil"></i>
+                                                    <i className="fa-solid "></i>
                                                 </button>
                                                 <button
                                                     className="btn btn-sm btn-danger"

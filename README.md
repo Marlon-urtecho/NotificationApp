@@ -1,7 +1,7 @@
 # NotificationApp
 Reposritorio de proyecto django, automatizacion de notificaciones para seguros obligatorios de vehiculos 
 
-<h1>coamdo para ejecutar el Frontend </h1>
+<h2>comando para ejecutar el Frontend </h2>
 <h2> entrar en el entorno virtual Entrar en la carpeta de el proyecto de react 
   conmando 1 ( cd wharssap_reminder)
   coamndo 2 ( cd fronted)
@@ -27,8 +27,7 @@ Reposritorio de proyecto django, automatizacion de notificaciones para seguros o
 
 <h2>Ejecutar Celery para las Tareas automaticas</h2>
 <p> 
-  Ejecuatar Redis desde el archivo redis.exe 
-  descargar https://redis.io/downloads/
+  Ejecuatar Redis desde el contenedor de docker
   
   Entrar en el carpeta raiz (whatssap_reminder) y ejecuar 
   comando ( celery -A Whatsapp_reminder worker -P gevent --loglevel=debug )
@@ -40,6 +39,7 @@ Reposritorio de proyecto django, automatizacion de notificaciones para seguros o
 <h2> Ejecuatar el servidor publico para ngrok </h2>
 <p>
   Servidor donde procesan las solicitudes de twilio 
+  (ngrok 8000)
 </p>
 
 <h2>Ejecutar al conssola de twilio </h2>

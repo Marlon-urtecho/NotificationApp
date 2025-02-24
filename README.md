@@ -48,7 +48,8 @@ Reposritorio de proyecto django, automatizacion de notificaciones para seguros o
 </p>
 
 
-
+http://127.0.0.1:8000/AutoMensaje/v1/api/login/
+http://127.0.0.1:8000/AutoMensaje/v1/api/token/refresh/
 
 
 <h1>Diseño navbar<h1/>

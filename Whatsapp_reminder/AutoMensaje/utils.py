@@ -39,9 +39,7 @@ def enviar_whatsapp_twilio(cliente, message):
     telefono_cliente_formateado = validar_formato_telefono(telefono_cliente)
     if telefono_cliente_formateado:
         account_sid = 'TWILIO_ACCOUNT_SID'
-        auth_token = 'TWILIO_AUTH_TOKEN'  
-        account_sid = os.getenv('TWILIO_ACCOUNT_SID')
-        auth_token = os.getenv('TWILIO_AUTH_TOKEN') # Tu Token de autenticación de Twilio
+        auth_token = 'TWILIO_AUTH_TOKEN'  # Tu Token de autenticación de Twilio
         client = Client(account_sid, auth_token)
 
         from_whatsapp_number = 'TWILIO_WHATSAPP_FROM' 
@@ -80,13 +78,10 @@ def enviar_whatsapp_bot(to, message):
     if telefono_cliente:
         account_sid = 'TWILIO_ACCOUNT_SID'  # Tu SID de Twilio
         auth_token = 'TWILIO_AUTH_TOKEN'  # Tu Token de autenticación de Twilio
-        account_sid = 'TWILIO_ACCOUNT_SID'  # Tu SID de Twilio
-        auth_token = 'TWILIO_AUTH_TOKEN'  # Tu Token de autenticación de Twilio
         client = Client(account_sid, auth_token)
 
         # Número de WhatsApp de Twilio (remitente)
         from_whatsapp_number = 'TWILIO_WHATSAPP_FROM'
-        from_whatsapp_number = 'TWILIO_WHATSAPP_FROM'  # Número habilitado de Twilio para WhatsApp
 
         # Verificamos que el número de "From" y "To" no sean iguales
         if from_whatsapp_number != f'whatsapp:{telefono_cliente}':

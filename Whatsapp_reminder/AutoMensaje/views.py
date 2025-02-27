@@ -32,22 +32,27 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.authentication import TokenAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+from django.contrib.auth.models import User
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
-class CustomTokenObtainPairView(TokenObtainPairView):
+class CustomTokenObtainPairView(APIView):
     def post(self, request, *args, **kwargs):
-        # Obtenemos el username y password del request
         username = request.data.get('username')
         password = request.data.get('password')
 
-        # Verificamos que las credenciales sean correctas
         try:
-            user = User.objects.get(username=username)  # Aquí estamos usando 'username'
+            user = User.objects.get(username=username)
             if user.check_password(password):
-                # Si las credenciales son correctas, creamos el refresh token y el access token
+                # Generar tokens
                 refresh = RefreshToken.for_user(user)
                 return Response({
-                    "token": str(refresh.access_token),  # Access token
-                    "refresh_token": str(refresh),  # Refresh token
+                    "token": str(refresh.access_token),
+                    "refresh_token": str(refresh),
                 })
             else:
                 return Response({"error": "Credenciales inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -504,21 +509,29 @@ def importar_clientes_desde_b2(request):
     return JsonResponse({'message': 'No se ha subido ningún archivo.'}, status=400)
 
 
-@csrf_exempt
+
+# Decorador para autenticar la vista
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication]) 
+@permission_classes([IsAuthenticated])  # Solo usuarios autenticados pueden acceder
+@csrf_exempt  
 def obtener_recordatorios(request):
     """Vista para obtener la lista de recordatorios"""
+    # Obtener todos los recordatorios y ordenarlos por fecha de envío (de más reciente a más antiguo)
     recordatorios = Recordatorio.objects.all().order_by('-fecha_envio')
+
+    # Preparar los datos a devolver en formato JSON
     recordatorios_data = [
         {
-            'cliente': recordatorio.cliente.nombre,
-            'telefono': recordatorio.cliente.telefono,  # Agregamos el teléfono del cliente
-            'mensaje': recordatorio.mensaje,
-            'fecha_envio': recordatorio.fecha_envio.strftime('%d/%m/%Y %H:%M'),
-            'enviado': recordatorio.enviado
+            'cliente': recordatorio.cliente.nombre,  
+            'telefono': recordatorio.cliente.telefono, 
+            'mensaje': recordatorio.mensaje, 
+            'fecha_envio': recordatorio.fecha_envio.strftime('%d/%m/%Y %H:%M'),  
         }
-        for recordatorio in recordatorios
+        for recordatorio in recordatorios  # Iteramos sobre cada recordatorio
     ]
-    return JsonResponse({'recordatorios': recordatorios_data})
+    
+    return Response(recordatorios_data)
 
 
 @api_view(['POST'])
@@ -550,8 +563,12 @@ def programar_recordatorios_view(request):
     programar_recordatorios.apply_async()  # Ejecuta la tarea de forma asincrónica
     return HttpResponse("Recordatorios programados con éxito.")
 
+
 class RecordatorioListView(APIView):
-     def get(self, request, format=None):
+    authentication_classes = [TokenAuthentication]  # Usando autenticación por token
+    permission_classes = [IsAuthenticated]  # Permitir solo a usuarios autenticados
+
+    def get(self, request, format=None):
         recordatorios = Recordatorio.objects.all()
         serializer = RecordatorioSerializer(recordatorios, many=True)
         return Response({

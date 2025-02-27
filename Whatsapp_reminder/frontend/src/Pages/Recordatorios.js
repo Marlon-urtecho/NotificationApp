@@ -2,27 +2,45 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Card, Spinner, Table, Form, InputGroup } from 'react-bootstrap';
 
 const Recordatorios = () => {
-    const [recordatorios, setRecordatorios] = useState([]);
+    const [recordatorios, setRecordatorios] = useState([]); // Inicializar como un array vacío
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
-    const [filteredRecordatorios, setFilteredRecordatorios] = useState([]);
+    const [filteredRecordatorios, setFilteredRecordatorios] = useState([]); // Inicializar como un array vacío
 
+    // Obtener el token de autenticación (aquí lo sacamos del localStorage)
+    const token = localStorage.getItem('token');  // Asegúrate de tener el token en el almacenamiento local
     // Función para obtener los recordatorios desde el backend
     useEffect(() => {
-        fetch('http://localhost:8000/AutoMensaje/v1/api/recordatorios/')
-            .then(response => response.json())
-            .then(data => {
-                setRecordatorios(data.recordatorios);
+        const fetchRecordatorios = async () => {
+            try {
+                const response = await fetch('http://localhost:8000/AutoMensaje/v1/api/recordatorios/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+        
+                if (!response.ok) {
+                    const errorData = await response.json();  // Captura el mensaje de error
+                    console.error('Error del backend:', errorData);
+                    throw new Error('Error al obtener los recordatorios');
+                }
+        
+                const data = await response.json();
+                setRecordatorios(data.recordatorios || []);
                 setLoading(false);
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Hubo un error al obtener los recordatorios:', error);
                 setError('Hubo un problema al cargar los recordatorios.');
                 setLoading(false);
-            });
-    }, []);
+            }
+        };
+        
+        fetchRecordatorios();
+    }, [token]);  // Dependemos del token para que se vuelva a cargar si cambia
 
     // Función de búsqueda
     const handleSearchChange = (e) => {
@@ -30,7 +48,7 @@ const Recordatorios = () => {
         setSearch(value);
         
         if (value) {
-            const filtered = recordatorios.filter(recordatorio =>
+            const filtered = (recordatorios || []).filter(recordatorio =>
                 recordatorio.cliente_nombre.toLowerCase().includes(value.toLowerCase()) ||
                 recordatorio.mensaje.toLowerCase().includes(value.toLowerCase())
             );
@@ -42,7 +60,7 @@ const Recordatorios = () => {
 
     // Filtrar recordatorios según búsqueda
     useEffect(() => {
-        setFilteredRecordatorios(recordatorios);
+        setFilteredRecordatorios(recordatorios || []);  // Asegúrate de que nunca sea undefined
     }, [recordatorios]);
 
     return (
@@ -74,7 +92,7 @@ const Recordatorios = () => {
                     </div>
                 ) : (
                     <>
-                        {filteredRecordatorios.length === 0 ? (
+                        {filteredRecordatorios && filteredRecordatorios.length === 0 ? (
                             <Alert variant="info">No hay recordatorios disponibles.</Alert>
                         ) : (
                             <Table striped bordered hover responsive className="shadow-sm">

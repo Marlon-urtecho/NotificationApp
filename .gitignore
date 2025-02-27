@@ -12,6 +12,8 @@ db.sqlite3
 *.env
 .env
 
+entorno_global/
+
 # Archivos del editor
 .vscode/
 .idea/

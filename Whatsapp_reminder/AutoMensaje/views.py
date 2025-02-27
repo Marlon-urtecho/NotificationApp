@@ -15,7 +15,7 @@ from twilio.rest import Client
 from django.views.decorators.csrf import csrf_exempt
 from .models import Cliente 
 from django.http.response import JsonResponse
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -37,8 +37,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from django.contrib.auth.models import User
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from AutoMensaje.models import User
 
 class CustomTokenObtainPairView(APIView):
     def post(self, request, *args, **kwargs):
@@ -58,6 +57,7 @@ class CustomTokenObtainPairView(APIView):
                 return Response({"error": "Credenciales inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
         except User.DoesNotExist:
             return Response({"error": "Credenciales inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
+
     
 
 class SucursalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -512,9 +512,9 @@ def importar_clientes_desde_b2(request):
 
 # Decorador para autenticar la vista
 @api_view(['GET'])
-@authentication_classes([TokenAuthentication]) 
+@authentication_classes([TokenAuthentication])  # Asegúrate de que se utilice el token
 @permission_classes([IsAuthenticated])  # Solo usuarios autenticados pueden acceder
-@csrf_exempt  
+@csrf_exempt  # Desactiva la protección CSRF para esta vista, si es necesario
 def obtener_recordatorios(request):
     """Vista para obtener la lista de recordatorios"""
     # Obtener todos los recordatorios y ordenarlos por fecha de envío (de más reciente a más antiguo)
@@ -523,10 +523,11 @@ def obtener_recordatorios(request):
     # Preparar los datos a devolver en formato JSON
     recordatorios_data = [
         {
-            'cliente': recordatorio.cliente.nombre,  
-            'telefono': recordatorio.cliente.telefono, 
-            'mensaje': recordatorio.mensaje, 
-            'fecha_envio': recordatorio.fecha_envio.strftime('%d/%m/%Y %H:%M'),  
+            'cliente': recordatorio.cliente.nombre,  # Nombre del cliente
+            'telefono': recordatorio.cliente.telefono,  # Teléfono del cliente
+            'mensaje': recordatorio.mensaje,  # Mensaje del recordatorio
+            'fecha_envio': recordatorio.fecha_envio.strftime('%d/%m/%Y %H:%M'),  # Fecha de envío formateada
+            'enviado': recordatorio.enviado  # Estado de si el recordatorio fue enviado o no
         }
         for recordatorio in recordatorios  # Iteramos sobre cada recordatorio
     ]

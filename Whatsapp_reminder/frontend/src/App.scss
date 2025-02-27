@@ -1,5 +1,5 @@
-@use 'bootstrap' as *;
-@import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+@use "bootstrap" as *;
+@import url("https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap");
 
 // Reseteo de márgenes y padding
 * {
@@ -7,19 +7,18 @@
   padding: 0;
 }
 
-body{
+body {
   font-family: "Rubik", serif;
   font-optical-sizing: auto;
-
 }
 
-// color de etiquetas 
+// color de etiquetas
 .text-dark {
   --bs-text-opacity: 1;
   color: rgb(255 255 255) !important;
 }
 
-//Enlace de navbar 
+//Enlace de navbar
 .navbar-brand {
   padding-top: var(--bs-navbar-brand-padding-y);
   padding-bottom: var(--bs-navbar-brand-padding-y);
@@ -40,55 +39,55 @@ body{
   text-decoration: none;
   background: none;
   border: 0;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  transition:
+    color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out;
 }
 
 // Variables de color
 $Light: #1f2072;
 $gray: #e7e9eb;
 
-
 // Estilos para la barra de navegación
 
 @media (min-width: 992px) {
   .navbar-expand-lg .navbar-nav {
-      flex-direction: row;
-      justify-content: flex-end;
-      width: 100%;
+    flex-direction: row;
+    justify-content: flex-end;
+    width: 100%;
   }
 }
-
 
 .navbar {
   background: $Light !important;
   padding: 1rem 2rem;
   border-bottom: 1px solid $gray;
 
-  a{
+  a {
     color: white;
     font-size: x-large;
-    
   }
 }
 
-.container-fluid{
+.container-fluid {
   display: flex;
 }
 
-.flex{
+.flex {
   display: flex;
 }
 
-.sidebar{
+.sidebar {
   width: 14rem;
   height: calc(100vh - 52px);
   border-right: 1px solid $gray;
-  ul{
+  ul {
     list-style: none;
     padding: 0;
-    li{
+    li {
       margin: 0.5rem 0;
-      a{
+      a {
         text-decoration: none;
         color: black;
         font-size: 1.2rem;
@@ -97,10 +96,10 @@ $gray: #e7e9eb;
         padding: 0.5rem 0;
         border-radius: 5px;
         transition: 0.3s;
-        &:hover{
+        &:hover {
           background: $gray;
         }
-        &.active{
+        &.active {
           background-color: gray;
         }
       }
@@ -108,32 +107,29 @@ $gray: #e7e9eb;
   }
 }
 
-
-.bg-blue{
+.bg-blue {
   background: $Light !important;
 }
 
-
-// felx par lo botones 
-.flexbtn{
+// felx par lo botones
+.flexbtn {
   display: flex;
   justify-content: center;
   gap: 0.5rem;
 }
 
-// Estilo de barra de busqueda 
+// Estilo de barra de busqueda
 div.dt-container {
-div.dt-search {
-  input {
-    margin-left: .5em;
-    display: inline-block;
-    width: 20rem ;
-    height: 2rem ;
+  div.dt-search {
+    input {
+      margin-left: 0.5em;
+      display: inline-block;
+      width: 20rem;
+      height: 2rem;
+    }
   }
 }
-}
 
-.textoCenter{
+.textoCenter {
   text-align: center;
 }
-

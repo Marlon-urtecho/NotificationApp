@@ -1,5 +1,5 @@
-import 'bootstrap/dist/css/bootstrap.min.css'; // Importar Bootstrap
-import React, { useState } from 'react';
+import "bootstrap/dist/css/bootstrap.min.css"; // Importar Bootstrap
+import React, { useState } from "react";
 
 function ImportarClientes() {
   const [file1, setFile1] = useState(null);
@@ -19,31 +19,46 @@ function ImportarClientes() {
 
   const handleUpload1 = async () => {
     if (!file1) {
-      setMessage1({ text: 'Por favor, selecciona un archivo para el formato Bac', type: 'danger' });
+      setMessage1({
+        text: "Por favor, selecciona un archivo para el formato Bac",
+        type: "danger",
+      });
       return;
     }
 
     setLoading1(true); // Inicia el spinner
 
     const formData = new FormData();
-    formData.append('file', file1);
+    formData.append("file", file1);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/AutoMensaje/v1/api/importar-clientes/', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        "http://127.0.0.1:8000/AutoMensaje/v1/api/importar-clientes/",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage1({ text: 'Clientes importados correctamente en el primer formato', type: 'success' });
+        setMessage1({
+          text: "Clientes importados correctamente en el primer formato",
+          type: "success",
+        });
       } else {
-        setMessage1({ text: `Error al importar: ${data.message}`, type: 'danger' });
+        setMessage1({
+          text: `Error al importar: ${data.message}`,
+          type: "danger",
+        });
       }
     } catch (error) {
-      console.error('Error de red:', error);
-      setMessage1({ text: 'Hubo un problema al cargar el archivo.', type: 'danger' });
+      console.error("Error de red:", error);
+      setMessage1({
+        text: "Hubo un problema al cargar el archivo.",
+        type: "danger",
+      });
     } finally {
       setLoading1(false); // Detener el spinner
     }
@@ -51,31 +66,46 @@ function ImportarClientes() {
 
   const handleUpload2 = async () => {
     if (!file2) {
-      setMessage2({ text: 'Por favor, selecciona un archivo para el formato La Fise', type: 'danger' });
+      setMessage2({
+        text: "Por favor, selecciona un archivo para el formato La Fise",
+        type: "danger",
+      });
       return;
     }
 
     setLoading2(true); // Inicia el spinner
 
     const formData = new FormData();
-    formData.append('file', file2);
+    formData.append("file", file2);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/AutoMensaje/v1/api/importar_clientes_desde_b2/', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        "http://127.0.0.1:8000/AutoMensaje/v1/api/importar_clientes_desde_b2/",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage2({ text: 'Clientes importados correctamente en el segundo formato', type: 'success' });
+        setMessage2({
+          text: "Clientes importados correctamente en el segundo formato",
+          type: "success",
+        });
       } else {
-        setMessage2({ text: `Error al importar: ${data.message}`, type: 'danger' });
+        setMessage2({
+          text: `Error al importar: ${data.message}`,
+          type: "danger",
+        });
       }
     } catch (error) {
-      console.error('Error de red:', error);
-      setMessage2({ text: 'Hubo un problema al cargar el archivo.', type: 'danger' });
+      console.error("Error de red:", error);
+      setMessage2({
+        text: "Hubo un problema al cargar el archivo.",
+        type: "danger",
+      });
     } finally {
       setLoading2(false); // Detener el spinner
     }
@@ -98,18 +128,25 @@ function ImportarClientes() {
             />
           </div>
           <button
-            className={`btn btn-primary ${loading1 ? 'disabled' : ''}`}
+            className={`btn btn-primary ${loading1 ? "disabled" : ""}`}
             onClick={handleUpload1}
             disabled={loading1}
           >
             {loading1 ? (
-              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+              <span
+                className="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              />
             ) : (
-              'Subir Archivo'
+              "Subir Archivo"
             )}
           </button>
           {message1 && (
-            <div className={`alert alert-${message1.type} mt-3 fade show`} role="alert">
+            <div
+              className={`alert alert-${message1.type} mt-3 fade show`}
+              role="alert"
+            >
               {message1.text}
             </div>
           )}
@@ -129,18 +166,25 @@ function ImportarClientes() {
             />
           </div>
           <button
-            className={`btn btn-primary ${loading2 ? 'disabled' : ''}`}
+            className={`btn btn-primary ${loading2 ? "disabled" : ""}`}
             onClick={handleUpload2}
             disabled={loading2}
           >
             {loading2 ? (
-              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+              <span
+                className="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              />
             ) : (
-              'Subir Archivo'
+              "Subir Archivo"
             )}
           </button>
           {message2 && (
-            <div className={`alert alert-${message2.type} mt-3 fade show`} role="alert">
+            <div
+              className={`alert alert-${message2.type} mt-3 fade show`}
+              role="alert"
+            >
               {message2.text}
             </div>
           )}

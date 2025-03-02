@@ -40,7 +40,7 @@ body {
   background: none;
   border: 0;
   transition:
-    color 0.15s ease-in-out,
+    color 0 ease-in-out,
     background-color 0.15s ease-in-out,
     border-color 0.15s ease-in-out;
 }
@@ -53,7 +53,7 @@ $gray: #e7e9eb;
 
 @media (min-width: 992px) {
   .navbar-expand-lg .navbar-nav {
-    flex-direction: row;
+    flex-direction: column;
     justify-content: flex-end;
     width: 100%;
   }

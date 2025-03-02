@@ -15,7 +15,7 @@ const Login = ({ setIsAuthenticated }) => {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/AutoMensaje/v1/api/login/",
+        "http://localhost:8000/AutoMensaje/v1/api/token/",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -27,16 +27,25 @@ const Login = ({ setIsAuthenticated }) => {
       );
 
       const data = await response.json();
+      console.log("Respuesta del servidor:", data); // Imprime la respuesta completa para asegurarte de que los datos estén bien
 
       if (!response.ok) {
-        throw new Error(data.error || "Error en las credenciales");
+        throw new Error(data.detail || "Credenciales incorrectas.");
       }
 
-      // Almacenar los tokens en el localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("refresh_token", data.refresh_token); // Guardar refresh token
-      setIsAuthenticated(true);
-      navigate("/");
+      // Verificamos si los tokens están presentes en la respuesta
+      if (data.access && data.refresh) {
+        console.log("Tokens recibidos:", data); // Imprime los tokens para verificar que están presentes
+
+        // Almacenar los tokens en localStorage
+        localStorage.setItem("token", data.access);
+        localStorage.setItem("refresh_token", data.refresh); // Guardar refresh token
+
+        setIsAuthenticated(true);
+        navigate("/"); // Redirige al dashboard o página principal
+      } else {
+        throw new Error("Tokens no recibidos del servidor.");
+      }
     } catch (error) {
       setError(error.message);
     } finally {

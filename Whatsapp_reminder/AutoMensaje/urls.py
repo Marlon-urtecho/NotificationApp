@@ -6,6 +6,8 @@ from rest_framework_simplejwt import views as jwt_views
 from .views import obtener_recordatorios
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import CustomTokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 
 
 router = DefaultRouter()
@@ -18,11 +20,12 @@ router.register(r'recordatorios', RecordatorioViewSet)
 
 urlpatterns = [
      # Rutas de autenticación JWT
-    path('api/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # Para obtener el token de acceso y refresco
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # Para refrescar el token de acceso
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     path('', include(router.urls)),
-    path('programar_recordatorios/', views.programar_recordatorios_view, name='programar_recordatorios'),  # Accede a views
     path('api/recordatorios/', RecordatorioListView.as_view(), name='recordatorio-list'),
     path('bot/', views.bot, name='bot'), 
     path('enviar-bienvenida/', views.enviar_bienvenida, name='enviar_bienvenida'),
@@ -34,9 +37,6 @@ urlpatterns = [
     path('api/users/', views.create_user, name='create_user'),  # Crear usuario
     path('api/users/<int:id>/', views.update_user, name='update_user'),  # Actualizar usuario
     path('api/users/<int:id>/', views.delete_user, name='delete_user'),  # Eliminar usuario
-    path('AutoMensaje/v1/api/ejecutar-tareas/', views.ejecutar_tareas, name='ejecutar_tareas'),
-    path('AutoMensaje/v1/api/recordatorios/', obtener_recordatorios, name='recordatorios'),
-    path('api/ejecutar-tareas-nueva/', views.ejecutar_tareas_nueva, name='ejecutar_tareas_nueva'),
     path('api/importar-clientes/', views.importar_clientes, name='importar_clientes'),
     path('api/importar_clientes_desde_b2/', views.importar_clientes_desde_b2, name='importar_clientes_desde_b2'),
 

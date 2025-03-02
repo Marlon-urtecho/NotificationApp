@@ -66,7 +66,7 @@ function App() {
               }
             />
             <Route
-              path="/recordatorios"
+              path="/Recordatorios"
               element={
                 isAuthenticated ? <Recordatorios /> : <Navigate to="/login" />
               }

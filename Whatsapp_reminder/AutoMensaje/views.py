@@ -59,7 +59,6 @@ class CustomTokenObtainPairView(APIView):
             return Response({"error": "Credenciales inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
 
     
-
 class SucursalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Sucursal.objects.all()
     serializer_class = SucursalSerializer
@@ -512,11 +511,12 @@ def importar_clientes_desde_b2(request):
 
 # Decorador para autenticar la vista
 @api_view(['GET'])
-@authentication_classes([TokenAuthentication])  # Asegúrate de que se utilice el token
-@permission_classes([IsAuthenticated])  # Solo usuarios autenticados pueden acceder
-@csrf_exempt  # Desactiva la protección CSRF para esta vista, si es necesario
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def obtener_recordatorios(request):
     """Vista para obtener la lista de recordatorios"""
+    
+
     # Obtener todos los recordatorios y ordenarlos por fecha de envío (de más reciente a más antiguo)
     recordatorios = Recordatorio.objects.all().order_by('-fecha_envio')
 
@@ -535,43 +535,17 @@ def obtener_recordatorios(request):
     return Response(recordatorios_data)
 
 
-@api_view(['POST'])
-def ejecutar_tareas(request):
-    # Aquí se agregaría la lógica para ejecutar las tareas, por ejemplo:
-    try:
-        # Ejecuta la lógica de tus tareas aquí
-        # Por ejemplo, actualizar el estado de los recordatorios
-        recordatorios = Recordatorio.objects.all()  # Esto solo es un ejemplo
-        serializer = RecordatorioSerializer(recordatorios, many=True)
-        return Response({'status': 'success', 'message': 'Las tareas se han ejecutado correctamente.'})
-    except Exception as e:
-        return Response({'status': 'error', 'message': str(e)}, status=500)
-
-
-@api_view(['POST'])
-def ejecutar_tareas_nueva(request):
-    try:
-        # Aquí puedes ejecutar la misma lógica que en la vista original
-        recordatorios = Recordatorio.objects.all()  # Solo un ejemplo
-        serializer = RecordatorioSerializer(recordatorios, many=True)
-        return Response({'status': 'success', 'message': 'Las tareas se han ejecutado correctamente.'})
-    except Exception as e:
-        return Response({'status': 'error', 'message': str(e)}, status=500)
-
-
-@csrf_exempt
-def programar_recordatorios_view(request):
-    programar_recordatorios.apply_async()  # Ejecuta la tarea de forma asincrónica
-    return HttpResponse("Recordatorios programados con éxito.")
-
-
 class RecordatorioListView(APIView):
-    authentication_classes = [TokenAuthentication]  # Usando autenticación por token
-    permission_classes = [IsAuthenticated]  # Permitir solo a usuarios autenticados
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
-        recordatorios = Recordatorio.objects.all()
-        serializer = RecordatorioSerializer(recordatorios, many=True)
-        return Response({
-            'recordatorios': serializer.data
-        })
+        try:
+            recordatorios = Recordatorio.objects.all().order_by('-fecha_envio')
+            serializer = RecordatorioSerializer(recordatorios, many=True)
+
+            return Response({
+                'recordatorios': serializer.data
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)

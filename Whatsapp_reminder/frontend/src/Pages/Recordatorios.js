@@ -1,72 +1,71 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Card, Spinner, Table, Form, InputGroup } from "react-bootstrap";
+import { Alert, Card, Form, InputGroup, Spinner, Table } from "react-bootstrap";
+import { useNavigate } from "react-router-dom"; // Importa el hook useNavigate de react-router
+import axios from "../Api/Axios"; // Importa la instancia de Axios configurada
 
 const Recordatorios = () => {
-  const [recordatorios, setRecordatorios] = useState([]); // Inicializar como un array vacío
+  const [recordatorios, setRecordatorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [filteredRecordatorios, setFilteredRecordatorios] = useState([]); // Inicializar como un array vacío
+  const [filteredRecordatorios, setFilteredRecordatorios] = useState([]);
 
-  const token = localStorage.getItem("token");
+  const navigate = useNavigate(); // Inicializa el hook de navegación
 
   useEffect(() => {
+    // Verificar si el token está en el localStorage
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      // Si no hay token, redirigir al login
+      setError("No estás autenticado. Por favor, inicia sesión.");
+      setLoading(false);
+      navigate("/login"); // Usamos el hook de navegación para redirigir
+      return;
+    }
+
+    // Si el token está presente, intentamos obtener los recordatorios
     const fetchRecordatorios = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:8000/AutoMensaje/v1/api/recordatorios/",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json(); // Captura el mensaje de error
-          console.error("Error del backend:", errorData);
-          throw new Error("Error al obtener los recordatorios");
-        }
-
-        const data = await response.json();
-        setRecordatorios(data.recordatorios || []);
+        const response = await axios.get("/AutoMensaje/v1/api/recordatorios/");
+        setRecordatorios(response.data.recordatorios || []);
         setLoading(false);
       } catch (error) {
         console.error("Hubo un error al obtener los recordatorios:", error);
-        setError("Hubo un problema al cargar los recordatorios.");
+        if (error.response && error.response.status === 401) {
+          setError(
+            "El token ha expirado o es inválido. Redirigiendo al login...",
+          );
+          setTimeout(() => {
+            navigate("/login"); // Redirige al login con un pequeño retraso
+          }, 2000);
+        } else {
+          setError("Hubo un problema al cargar los recordatorios.");
+        }
         setLoading(false);
       }
     };
 
     fetchRecordatorios();
-  }, [token]); // Dependemos del token para que se vuelva a cargar si cambia
+  }, [navigate]); // Agregamos `navigate` como dependencia para evitar advertencias
 
-  // Función de búsqueda
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearch(value);
-
-    if (value) {
-      const filtered = (recordatorios || []).filter(
-        (recordatorio) =>
-          recordatorio.cliente_nombre
-            .toLowerCase()
-            .includes(value.toLowerCase()) ||
-          recordatorio.mensaje.toLowerCase().includes(value.toLowerCase()),
-      );
-      setFilteredRecordatorios(filtered);
-    } else {
-      setFilteredRecordatorios(recordatorios);
-    }
-  };
-
-  // Filtrar recordatorios según búsqueda
+  // Lógica de filtrado y búsqueda
   useEffect(() => {
-    setFilteredRecordatorios(recordatorios || []); // Asegúrate de que nunca sea undefined
-  }, [recordatorios]);
+    if (search === "") {
+      setFilteredRecordatorios(recordatorios);
+    } else {
+      setFilteredRecordatorios(
+        recordatorios.filter(
+          (recordatorio) =>
+            recordatorio.cliente_nombre
+              .toLowerCase()
+              .includes(search.toLowerCase()) ||
+            recordatorio.mensaje.toLowerCase().includes(search.toLowerCase()),
+        ),
+      );
+    }
+  }, [search, recordatorios]);
 
   return (
     <div className="container mt-5">
@@ -83,7 +82,7 @@ const Recordatorios = () => {
               type="text"
               placeholder="Buscar por cliente o mensaje..."
               value={search}
-              onChange={handleSearchChange}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </InputGroup>
         </Card.Body>
@@ -97,7 +96,7 @@ const Recordatorios = () => {
           </div>
         ) : (
           <>
-            {filteredRecordatorios && filteredRecordatorios.length === 0 ? (
+            {filteredRecordatorios.length === 0 ? (
               <Alert variant="info">No hay recordatorios disponibles.</Alert>
             ) : (
               <Table striped bordered hover responsive className="shadow-sm">

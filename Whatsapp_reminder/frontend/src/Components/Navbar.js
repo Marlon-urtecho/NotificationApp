@@ -23,12 +23,11 @@ function NavbarNav(args) {
         <NavbarBrand href="#">
           <img
             src="/logotaipo.png"
-            alt="Logo"
+            alt="Logo-Aplicacion"
             style={{ height: "50px", marginRight: "10px" }}
           />
-          | Seguros Notification
+          | WhatsReminder
         </NavbarBrand>
-        <NavbarToggler onClick={toggle} />
         <Collapse isOpen={isOpen} navbar>
           <Nav className="me-auto" navbar>
             <UncontrolledDropdown nav inNavbar>
@@ -36,13 +35,16 @@ function NavbarNav(args) {
                 <img
                   src="/settings.png"
                   alt="Logo"
-                  style={{ height: "50px", marginRight: "0px" }}
+                  style={{ height: "50px", marginRight: "0px", color: "white" }}
                 />
-                settings
+                Opciones
               </DropdownToggle>
-              <DropdownMenu right>
-                <DropdownItem>Inicio</DropdownItem>
-                <DropdownItem>option 2</DropdownItem>
+              <DropdownMenu align="end">
+                <DropdownItem>Home</DropdownItem>
+                <DropdownItem>Clientes</DropdownItem>
+                <DropdownItem>Sucursales</DropdownItem>
+                <DropdownItem>Usuarios</DropdownItem>
+                <DropdownItem>Dashboard</DropdownItem>
                 <DropdownItem divider />
                 <DropdownItem>Cerrar Sesión</DropdownItem>
               </DropdownMenu>

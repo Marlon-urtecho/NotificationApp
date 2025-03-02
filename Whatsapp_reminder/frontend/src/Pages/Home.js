@@ -24,7 +24,7 @@ function Home() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: email, password }),
+            body: JSON.stringify({ username: password }),
           },
         );
 
@@ -182,7 +182,7 @@ function Home() {
       className="container-fluid d-flex justify-content-center align-items-center"
       style={{
         height: "90vh",
-        background: 'url("/prismaclaro.jpg") no-repeat center center fixed',
+        backgroundColor: "#fff",
         backgroundSize: "175vh",
       }}
     >
@@ -191,11 +191,12 @@ function Home() {
         style={{
           width: "100%",
           maxWidth: "800px",
-          backgroundColor: "rgba(255, 255, 255, 0.5)", // Fondo más transparente para el contenedor
+          backgroundColor: "#1f2072",
           borderRadius: "15px",
+          color: "#fff",
         }}
       >
-        <h3 className="text-center mb-4 text-dark">Formulario de Clientes</h3>
+        <h3 className="text-center mb-4 text-white">Formulario de Clientes</h3>
         <form
           onSubmit={(e) => {
             e.preventDefault();

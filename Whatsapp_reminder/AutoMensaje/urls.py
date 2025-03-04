@@ -1,22 +1,16 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ClienteViewSet, RecordatorioViewSet, UserViewSet, SucursalViewSet, RecordatorioListView, bot, SucursalListCreateView, SucursalRetrieveUpdateDestroyView, ejecutar_tareas_view
+from .views import ClienteViewSet, RecordatorioViewSet, UserViewSet, SucursalViewSet, RecordatorioListView,SucursalListCreateView, SucursalRetrieveUpdateDestroyView
 from . import views  # Importa views aquí
 from rest_framework_simplejwt import views as jwt_views
-from .views import obtener_recordatorios
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import CustomTokenObtainPairView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
-
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'sucursales', SucursalViewSet)
 router.register(r'clientes', ClienteViewSet)
 router.register(r'recordatorios', RecordatorioViewSet)
-
-
 
 urlpatterns = [
      # Rutas de autenticación JWT

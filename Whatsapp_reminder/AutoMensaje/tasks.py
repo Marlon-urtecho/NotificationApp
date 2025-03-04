@@ -90,6 +90,7 @@ def enviar_recordatorio(self):
                 logger.info("No hay recordatorios para actualizar.")
     except Exception as e:
         logger.error(f"Error al enviar los recordatorios: {e}")
+        
 @shared_task
 def programar_recordatorios():
     hoy = timezone.now().date()

@@ -32,6 +32,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
@@ -59,13 +60,17 @@ class CustomTokenObtainPairView(APIView):
             return Response({"error": "Credenciales inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
 
     
+
 class SucursalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Sucursal.objects.all()
     serializer_class = SucursalSerializer
+    permission_classes = [IsAuthenticated]  # Requiere autenticación
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]  # Requiere autenticación
 
     @action(detail=True, methods=['get'])
     def activate(self, request, pk=None):
@@ -79,37 +84,43 @@ class UserViewSet(viewsets.ModelViewSet):
         user = self.get_object()
         user.is_active = False
         user.save()
-        return Response({'status': 'Usuario desactivado'})   
+        return Response({'status': 'Usuario desactivado'}) 
     
+
 class SucursalViewSet(viewsets.ModelViewSet):
     queryset = Sucursal.objects.all()
     serializer_class = SucursalSerializer
+    permission_classes = [IsAuthenticated]  # Requiere autenticación
     
     
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
-
+    permission_classes = [IsAuthenticated]  # Requiere autenticación
 
 class RecordatorioViewSet(viewsets.ModelViewSet):
     queryset = Recordatorio.objects.all()
     serializer_class = RecordatorioSerializer
-
-class ejecutar_tareas_view(viewsets.ModelViewSet):
-    queryset = Recordatorio.objects.all()
-    serializer_class = RecordatorioSerializer
+    permission_classes = [IsAuthenticated]  # Requiere autenticación
 
 
+# Vista para crear un cliente
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])  # Requiere autenticación
 def crear_cliente(request):
     if request.method == 'POST':
         serializer = ClienteSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            # Asocia el cliente con el usuario autenticado (si corresponde)
+            serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
-# Vista para listar los clientes en el frontend
+# Vista para listar los clientes
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])  # Requiere autenticación
 def list_Clientes(request):
     clients = Cliente.objects.all()
     clients_data = [{
@@ -122,34 +133,43 @@ def list_Clientes(request):
         'precio': client.precio,
         'sucursal': client.sucursal.nombre
     } for client in clients]
-    return JsonResponse({'Cliente': clients_data})
+    return Response({'Cliente': clients_data})
 
+# Vista para obtener los clientes
 @api_view(['GET'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])  # Requiere autenticación
 def obtener_clientes(request):
     clientes = Cliente.objects.all()
     serializer = ClienteSerializer(clientes, many=True)
     return Response(serializer.data)
 
+# Vista para obtener las sucursales
 @api_view(['GET'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])  # Requiere autenticación
 def obtener_sucursales(request):
     sucursales = Sucursal.objects.all()
     sucursal_serializer = SucursalSerializer(sucursales, many=True)
     return Response(sucursal_serializer.data)
 
-
+# Vista para crear sucursal
 class SucursalListCreateView(generics.ListCreateAPIView):
     queryset = Sucursal.objects.all()
     serializer_class = SucursalSerializer
+    permission_classes = [IsAuthenticated]  # Requiere autenticación
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:
-            serializer.save(user=self.request.user)
+            serializer.save(user=self.request.user)  # Asociamos la sucursal con el usuario
         else:
             serializer.save()
 
+# Vista para obtener, actualizar o eliminar sucursal
 class SucursalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Sucursal.objects.all()
     serializer_class = SucursalSerializer
+    permission_classes = [IsAuthenticated]  # Requiere autenticación
 
 
 
@@ -169,13 +189,20 @@ def user_to_dict(user):
         'user_permissions': [perm.name for perm in user.user_permissions.all()],
     }
    
+
 # Listar todos los usuarios
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])
 def list_users(request):
     users = User.objects.all()
     users_data = [user_to_dict(user) for user in users]
     return JsonResponse(users_data, safe=False)
-# Crear un nuevo usuario
+
 @csrf_exempt
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])  # Requiere autenticación
 def create_user(request):
     if request.method == 'POST':
         try:
@@ -219,7 +246,10 @@ def create_user(request):
             return JsonResponse({'error': str(e)}, status=400)
 
 
-# Actualizar un usuario
+@csrf_exempt
+@api_view(['PUT'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])  # Requiere autenticación
 @csrf_exempt
 def update_user(request, id):
     try:
@@ -267,8 +297,10 @@ def update_user(request, id):
             return JsonResponse({'error': str(e)}, status=400)
 
 
-# Eliminar un usuario
 @csrf_exempt
+@api_view(['DELETE'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])  # Requiere autenticación
 def delete_user(request, id):
     try:
         user = User.objects.get(id=id)
@@ -331,8 +363,11 @@ def bot(request):
     return HttpResponse("Método no permitido", status=405)
 
 
+
 @csrf_exempt
 @api_view(['POST'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])  # Requiere autenticación
 def importar_clientes(request):
     if request.method == 'POST':
         if 'file' not in request.FILES:
@@ -421,9 +456,12 @@ def importar_clientes(request):
 
     return JsonResponse({'message': 'No se ha subido ningún archivo.'}, status=400)
 
+
 # para el inser de los clientes desde la fise de excel
 @csrf_exempt
 @api_view(['POST'])
+@authentication_classes([JWTAuthentication]) 
+@permission_classes([IsAuthenticated])  # Requiere autenticación
 def importar_clientes_desde_b2(request):
     if request.method == 'POST':
         if 'file' not in request.FILES:
@@ -508,44 +546,34 @@ def importar_clientes_desde_b2(request):
     return JsonResponse({'message': 'No se ha subido ningún archivo.'}, status=400)
 
 
-
-# Decorador para autenticar la vista
 @api_view(['GET'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])  # Autenticación con JWT
+@permission_classes([IsAuthenticated])  # Permiso para usuarios autenticados
 def obtener_recordatorios(request):
     """Vista para obtener la lista de recordatorios"""
-    
-
-    # Obtener todos los recordatorios y ordenarlos por fecha de envío (de más reciente a más antiguo)
     recordatorios = Recordatorio.objects.all().order_by('-fecha_envio')
 
-    # Preparar los datos a devolver en formato JSON
     recordatorios_data = [
         {
-            'cliente': recordatorio.cliente.nombre,  # Nombre del cliente
-            'telefono': recordatorio.cliente.telefono,  # Teléfono del cliente
-            'mensaje': recordatorio.mensaje,  # Mensaje del recordatorio
-            'fecha_envio': recordatorio.fecha_envio.strftime('%d/%m/%Y %H:%M'),  # Fecha de envío formateada
-            'enviado': recordatorio.enviado  # Estado de si el recordatorio fue enviado o no
+            'cliente': recordatorio.cliente.nombre,
+            'telefono': recordatorio.cliente.telefono,
+            'mensaje': recordatorio.mensaje,
+            'fecha_envio': recordatorio.fecha_envio.strftime('%d/%m/%Y %H:%M'),
+            'enviado': recordatorio.enviado
         }
-        for recordatorio in recordatorios  # Iteramos sobre cada recordatorio
+        for recordatorio in recordatorios
     ]
     
     return Response(recordatorios_data)
 
-
 class RecordatorioListView(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
         try:
             recordatorios = Recordatorio.objects.all().order_by('-fecha_envio')
             serializer = RecordatorioSerializer(recordatorios, many=True)
-
-            return Response({
-                'recordatorios': serializer.data
-            })
+            return Response({'recordatorios': serializer.data})
         except Exception as e:
             return Response({'error': str(e)}, status=500)

@@ -7,6 +7,9 @@ import "jszip"; // Para la exportación CSV, Excel, etc.
 import "pdfmake/build/pdfmake"; // Para la exportación a PDF
 import "pdfmake/build/vfs_fonts"; // Para las fuentes de PDF
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
 
 function Clients() {
   const [clients, setClients] = useState([]); // Estado para almacenar los clientes
@@ -15,6 +18,11 @@ function Clients() {
   const [editingClient, setEditingClient] = useState(null); // Estado para almacenar el cliente que está siendo editado
   const [newClient, setNewClient] = useState({}); // Estado para almacenar los datos del nuevo cliente
   const [showCreateModal, setShowCreateModal] = useState(false); // Estado para controlar la visibilidad del modal de creación
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+
+
+
 
   const dataTableOptions = {
     columnDefs: [
@@ -48,54 +56,113 @@ function Clients() {
     if (dataTable) {
       dataTable.destroy(); // Destruir la instancia anterior
     }
-    // Inicializar la DataTable con las opciones proporcionadas
     const newDataTable = $(tableRef.current).DataTable(dataTableOptions);
-    setDataTable(newDataTable); // Guardar la instancia de DataTable
+    setDataTable(newDataTable);
   };
 
-  // Función para obtener los clientes desde el backend Django
+  // Función para obtener los clientes desde el backend Django con autenticación
   const fetchClients = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      // Si no hay token, redirigir al login
+      setError("No estás autenticado. Por favor, inicia sesión.");
+      setLoading(false);
+      navigate("/login"); // Redirige al login
+      return;
+    }
+
     try {
-      const response = await fetch(
+      // Realizamos la solicitud usando axios y el token en las cabeceras
+      const response = await axios.get(
         "http://127.0.0.1:8000/AutoMensaje/v1/clientes/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Enviar el token en la cabecera Authorization
+          },
+        },
       );
-      if (!response.ok) {
-        throw new Error("Error al cargar los clientes");
-      }
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setClients(data); // Actualizar el estado con los datos de los clientes
+
+      console.log("Respuesta de clientes:", response.data); // Verificar la respuesta de la API
+
+      // Verificamos si la respuesta contiene un arreglo
+      if (Array.isArray(response.data)) {
+        setClients(response.data); // Actualizar el estado con los clientes
+        setLoading(false);
       } else {
-        console.error(
+        throw new Error(
           "Error: los datos de clientes no están en el formato esperado",
-          data,
         );
       }
     } catch (error) {
       console.error("Error al cargar los clientes:", error);
+
+      // Manejo de errores: si la respuesta tiene un error 401, redirigir al login
+      if (error.response && error.response.status === 401) {
+        setError(
+          "El token ha expirado o es inválido. Redirigiendo al login...",
+        );
+        setTimeout(() => {
+          localStorage.removeItem("token"); // Eliminar el token expirado
+          navigate("/login"); // Redirigir al login
+        }, 2000);
+      } else {
+        setError("Hubo un problema al cargar los clientes.");
+      }
+      setLoading(false);
     }
   };
 
-  // Función para obtener las sucursales desde el backend Django
+  // Función para obtener las sucursales desde el backend Django con autenticación
   const fetchSucursales = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      // Si no hay token, redirigir al login
+      setError("No estás autenticado. Por favor, inicia sesión.");
+      setLoading(false);
+      navigate("/login"); // Redirige al login
+      return;
+    }
+
     try {
-      const response = await fetch(
+      // Realizamos la solicitud usando axios y el token en las cabeceras
+      const response = await axios.get(
         "http://127.0.0.1:8000/AutoMensaje/v1/sucursales/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Enviar el token en la cabecera Authorization
+          },
+        },
       );
-      if (!response.ok) {
-        throw new Error("Error al cargar las sucursales");
-      }
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setSucursales(data); // Actualizar el estado con las sucursales
+
+      console.log("Respuesta de sucursales:", response.data); // Verificar la respuesta de la API
+
+      // Verificamos si la respuesta contiene un arreglo
+      if (Array.isArray(response.data)) {
+        setSucursales(response.data); // Actualizar el estado con las sucursales
+        setLoading(false);
       } else {
-        console.error(
+        throw new Error(
           "Error: las sucursales no están en el formato esperado",
-          data,
         );
       }
     } catch (error) {
       console.error("Error al cargar las sucursales:", error);
+
+      // Manejo de errores: si la respuesta tiene un error 401, redirigir al login
+      if (error.response && error.response.status === 401) {
+        setError(
+          "El token ha expirado o es inválido. Redirigiendo al login...",
+        );
+        setTimeout(() => {
+          localStorage.removeItem("token"); // Eliminar el token expirado
+          navigate("/login"); // Redirigir al login
+        }, 2000);
+      } else {
+        setError("Hubo un problema al cargar las sucursales.");
+      }
+      setLoading(false);
     }
   };
 
@@ -126,32 +193,53 @@ function Clients() {
     setEditingClient(client); // Establecer el cliente a editar
   };
 
-  // Función para actualizar un cliente
+  // Función para actualizar un cliente con autenticación y usando axios
   const updateClient = async () => {
     if (editingClient) {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        // Si no hay token, redirigir al login
+        setError("No estás autenticado. Por favor, inicia sesión.");
+        navigate("/login"); // Redirige al login
+        return;
+      }
+
       try {
-        const response = await fetch(
+        // Realizamos la solicitud PUT usando axios y el token en las cabeceras
+        const response = await axios.put(
           `http://127.0.0.1:8000/AutoMensaje/v1/clientes/${editingClient.id}/`,
+          editingClient,
           {
-            method: "PUT",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Enviar el token en la cabecera Authorization
             },
-            body: JSON.stringify(editingClient),
           },
         );
 
-        if (response.ok) {
+        if (response.status === 200) {
           alert("Cliente actualizado");
           fetchClients(); // Recargar la lista de clientes
           setEditingClient(null); // Limpiar el cliente que está siendo editado
         } else {
-          const errorData = await response.json(); // Obtener los detalles del error
-          console.error("Error al actualizar el cliente:", errorData);
           alert("Error al actualizar el cliente");
         }
       } catch (error) {
         console.error("Error al actualizar el cliente:", error);
+
+        // Manejo de errores: si la respuesta tiene un error 401, redirigir al login
+        if (error.response && error.response.status === 401) {
+          setError(
+            "El token ha expirado o es inválido. Redirigiendo al login...",
+          );
+          setTimeout(() => {
+            localStorage.removeItem("token"); // Eliminar el token expirado
+            navigate("/login"); // Redirigir al login
+          }, 2000);
+        } else {
+          setError("Hubo un problema al actualizar el cliente.");
+        }
       }
     }
   };
@@ -193,45 +281,114 @@ function Clients() {
       fecha_renovacion: formattedDate, // Formatear la fecha de renovación
     };
 
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      // Si no hay token, redirigir al login
+      setError("No estás autenticado. Por favor, inicia sesión.");
+      navigate("/login"); // Redirige al login
+      return;
+    }
+
     try {
-      const response = await fetch(
+      // Realizamos la solicitud POST usando axios y el token en las cabeceras
+      const response = await axios.post(
         "http://127.0.0.1:8000/AutoMensaje/v1/clientes/",
+        clientToCreate,
         {
-          method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Enviar el token en la cabecera Authorization
           },
-          body: JSON.stringify(clientToCreate),
         },
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Detalles del error:", errorData); // Ver los detalles del error
-        alert("Error al crear el cliente");
-      } else {
+      if (response.status === 201) {
         alert("Nuevo cliente creado");
         fetchClients(); // Recargar la lista de clientes
         setShowCreateModal(false); // Cerrar el modal de creación
         setNewClient({}); // Limpiar el formulario
+      } else {
+        console.error("Error al crear el cliente:", response.data);
+        alert("Error al crear el cliente");
       }
     } catch (error) {
       console.error("Error al crear el cliente:", error);
+
+      // Manejo de errores: si la respuesta tiene un error 401, redirigir al login
+      if (error.response && error.response.status === 401) {
+        setError(
+          "El token ha expirado o es inválido. Redirigiendo al login...",
+        );
+        setTimeout(() => {
+          localStorage.removeItem("token"); // Eliminar el token expirado
+          navigate("/login"); // Redirigir al login
+        }, 2000);
+      } else {
+        setError("Hubo un problema al crear el cliente.");
+      }
     }
   };
 
   // Usamos useEffect para cargar los clientes y las sucursales
   useEffect(() => {
-    fetchClients(); // Traer los datos de los clientes desde Django
-    fetchSucursales(); // Traer las sucursales
-  }, []);
+    const fetchClientsAndSucursales = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        // Si no hay token, redirigir al login
+        setError("No estás autenticado. Por favor, inicia sesión.");
+        navigate("/login"); // Redirige al login
+        return;
+      }
+
+      try {
+        // Obtener los clientes
+        const clientsResponse = await axios.get(
+          "http://127.0.0.1:8000/AutoMensaje/v1/clientes/",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Enviar el token en las cabeceras
+            },
+          },
+        );
+        setClients(clientsResponse.data); // Establecer los clientes en el estado
+
+        // Obtener las sucursales
+        const sucursalesResponse = await axios.get(
+          "http://127.0.0.1:8000/AutoMensaje/v1/sucursales/",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Enviar el token en las cabeceras
+            },
+          },
+        );
+        setSucursales(sucursalesResponse.data); // Establecer las sucursales en el estado
+      } catch (error) {
+        console.error("Error al cargar los clientes o sucursales:", error);
+        if (error.response && error.response.status === 401) {
+          setError(
+            "El token ha expirado o es inválido. Redirigiendo al login...",
+          );
+          setTimeout(() => {
+            localStorage.removeItem("token"); // Eliminar el token expirado
+            navigate("/login"); // Redirigir al login
+          }, 2000);
+        } else {
+          setError("Hubo un problema al cargar los datos.");
+        }
+      }
+    };
+
+    fetchClientsAndSucursales(); // Llamar a la función para obtener clientes y sucursales
+  }, [navigate]); // Dependencia vacía, solo se ejecuta una vez al cargar el componente
 
   // Usamos otro useEffect para inicializar DataTable cuando los clientes estén listos
   useEffect(() => {
     if (clients.length > 0) {
       initDataTable(); // Inicializar la DataTable solo cuando los clientes estén disponibles
     }
-  }, [clients]);
+  }, [clients]); // Dependencia de clientes, se ejecuta cuando los clientes cambian
 
   return (
     <div className="container mt-4">

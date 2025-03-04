@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Alert, Card, Form, InputGroup, Spinner, Table } from "react-bootstrap";
-import { useNavigate } from "react-router-dom"; // Importa el hook useNavigate de react-router
+import { useNavigate } from "react-router-dom";
 import axios from "../Api/Axios"; // Importa la instancia de Axios configurada
 
 const Recordatorios = () => {
@@ -28,17 +28,30 @@ const Recordatorios = () => {
     // Si el token está presente, intentamos obtener los recordatorios
     const fetchRecordatorios = async () => {
       try {
+        // Verificar que el token esté en las cabeceras
+        console.log("Token en las cabeceras:", token); // Verifica el token
+
+        console.log("Cabeceras de solicitud:", axios.defaults.headers);
+
         const response = await axios.get("/AutoMensaje/v1/api/recordatorios/");
+
+        // Verificar la respuesta de la API en la consola
+        console.log("Response data:", response.data);
+
         setRecordatorios(response.data.recordatorios || []);
         setLoading(false);
       } catch (error) {
-        console.error("Hubo un error al obtener los recordatorios:", error);
+        console.error("Error fetching recordatorios:", error);
+
+        // Verificar el error y si el token es inválido o ha expirado
         if (error.response && error.response.status === 401) {
           setError(
             "El token ha expirado o es inválido. Redirigiendo al login...",
           );
           setTimeout(() => {
-            navigate("/login"); // Redirige al login con un pequeño retraso
+            localStorage.removeItem("token");
+            localStorage.removeItem("refresh_token");
+            navigate("/login");
           }, 2000);
         } else {
           setError("Hubo un problema al cargar los recordatorios.");
@@ -48,7 +61,7 @@ const Recordatorios = () => {
     };
 
     fetchRecordatorios();
-  }, [navigate]); // Agregamos `navigate` como dependencia para evitar advertencias
+  }, [navigate]);
 
   // Lógica de filtrado y búsqueda
   useEffect(() => {

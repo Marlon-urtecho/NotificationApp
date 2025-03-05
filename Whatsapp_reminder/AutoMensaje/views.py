@@ -86,13 +86,12 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save()
         return Response({'status': 'Usuario desactivado'}) 
     
-
 class SucursalViewSet(viewsets.ModelViewSet):
     queryset = Sucursal.objects.all()
     serializer_class = SucursalSerializer
-    permission_classes = [IsAuthenticated]  # Requiere autenticación
-    
-    
+    permission_classes = [IsAuthenticated]
+
+      
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer

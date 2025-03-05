@@ -1,6 +1,7 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
+import axios from "axios";
 
 function Home() {
   const [newClient, setNewClient] = useState({
@@ -15,27 +16,32 @@ function Home() {
 
   const [clients, setClients] = useState([]);
   const [sucursales, setSucursales] = useState([]);
+  const token = localStorage.getItem("token"); // Obtener el token JWT desde localStorage
+
+  // Asegurarse de que el token esté presente
+  if (!token) {
+    console.error("No estás autenticado. Inicia sesión para continuar.");
+  }
+
+  // Configuración de Axios con el token
+  const axiosInstance = axios.create({
+    baseURL: "http://127.0.0.1:8000/AutoMensaje/v1/",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`, // Enviar el token en las cabeceras
+    },
+  });
 
   useEffect(() => {
     const fetchSucursales = async () => {
       try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/AutoMensaje/v1/sucursales/",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: password }),
-          },
-        );
+        const response = await axiosInstance.post("sucursales/", {
+          username: "password", // Asegúrate de que el valor de password sea correcto
+        });
 
-        if (response.ok) {
-          const data = await response.json();
-          setSucursales(data);
-        } else {
-          console.error("Error al cargar sucursales");
-        }
+        setSucursales(response.data);
       } catch (error) {
-        console.error("Error de red al obtener sucursales", error);
+        console.error("Error al obtener sucursales:", error);
       }
     };
 
@@ -52,22 +58,9 @@ function Home() {
 
   const createClient = async () => {
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/AutoMensaje/v1/clientes/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newClient),
-        },
-      );
+      const response = await axiosInstance.post("clientes/", newClient);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Detalles del error:", errorData);
-        alert("Error al crear el cliente");
-      } else {
+      if (response.status === 201) {
         alert("Nuevo cliente creado");
         setNewClient({
           nombre: "",
@@ -78,6 +71,9 @@ function Home() {
           precio: "",
           sucursal: "",
         });
+      } else {
+        console.error("Detalles del error:", response.data);
+        alert("Error al crear el cliente");
       }
     } catch (error) {
       console.error("Error al crear el cliente:", error);
@@ -101,8 +97,6 @@ function Home() {
         range: 2,
       });
 
-      console.log("Datos leídos del archivo Excel:", jsonData);
-
       const updatedClients = jsonData.map((row) => {
         return {
           telefono: row[0] || null,
@@ -115,8 +109,6 @@ function Home() {
         };
       });
 
-      console.log("Clientes procesados:", updatedClients);
-
       setClients(updatedClients);
     };
     reader.readAsBinaryString(file);
@@ -126,7 +118,7 @@ function Home() {
     for (let i = 0; i < clients.length; i++) {
       const client = clients[i];
 
-      let sucursalId = null;
+      let sucursalId = null; // Ajusta la lógica para obtener la sucursal correcta si es necesario
 
       const clientData = {
         nombre: client.nombre,
@@ -151,23 +143,15 @@ function Home() {
       }
 
       try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/AutoMensaje/v1/clientes/",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(clientData),
-          },
-        );
+        const response = await axiosInstance.post("clientes/", clientData);
 
-        if (response.ok) {
+        if (response.status === 201) {
           console.log(`Cliente ${client.nombre} creado`);
         } else {
-          const errorData = await response.json();
-          console.error("Error al importar cliente:", errorData);
-          alert(`Error al importar cliente: ${errorData.message || errorData}`);
+          console.error("Error al importar cliente:", response.data);
+          alert(
+            `Error al importar cliente: ${response.data.message || response.data}`,
+          );
         }
       } catch (error) {
         console.error("Error al importar cliente:", error);
@@ -214,10 +198,10 @@ function Home() {
                 onChange={handleChange}
                 required
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.7)", // Fondo blanco semitransparente
-                  border: "1px solid rgba(0, 0, 0, 0.2)", // Borde suave para mejorar visibilidad
-                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)", // Sombra sutil
-                  color: "#333", // Color del texto
+                  backgroundColor: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0, 0, 0, 0.2)",
+                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                  color: "#333",
                 }}
               />
             </div>
@@ -231,10 +215,10 @@ function Home() {
                 onChange={handleChange}
                 required
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.7)", // Fondo blanco semitransparente
-                  border: "1px solid rgba(0, 0, 0, 0.2)", // Borde suave para mejorar visibilidad
-                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)", // Sombra sutil
-                  color: "#333", // Color del texto
+                  backgroundColor: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0, 0, 0, 0.2)",
+                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                  color: "#333",
                 }}
               />
             </div>
@@ -248,10 +232,10 @@ function Home() {
                 onChange={handleChange}
                 required
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.7)", // Fondo blanco semitransparente
-                  border: "1px solid rgba(0, 0, 0, 0.2)", // Borde suave para mejorar visibilidad
-                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)", // Sombra sutil
-                  color: "#333", // Color del texto
+                  backgroundColor: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0, 0, 0, 0.2)",
+                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                  color: "#333",
                 }}
               />
             </div>
@@ -268,10 +252,10 @@ function Home() {
                 onChange={handleChange}
                 required
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.7)", // Fondo blanco semitransparente
-                  border: "1px solid rgba(0, 0, 0, 0.2)", // Borde suave para mejorar visibilidad
-                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)", // Sombra sutil
-                  color: "#333", // Color del texto
+                  backgroundColor: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0, 0, 0, 0.2)",
+                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                  color: "#333",
                 }}
               />
             </div>
@@ -285,10 +269,10 @@ function Home() {
                 onChange={handleChange}
                 required
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.7)", // Fondo blanco semitransparente
-                  border: "1px solid rgba(0, 0, 0, 0.2)", // Borde suave para mejorar visibilidad
-                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)", // Sombra sutil
-                  color: "#333", // Color del texto
+                  backgroundColor: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0, 0, 0, 0.2)",
+                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                  color: "#333",
                 }}
               />
             </div>
@@ -302,10 +286,10 @@ function Home() {
                 onChange={handleChange}
                 required
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.7)", // Fondo blanco semitransparente
-                  border: "1px solid rgba(0, 0, 0, 0.2)", // Borde suave para mejorar visibilidad
-                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)", // Sombra sutil
-                  color: "#333", // Color del texto
+                  backgroundColor: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0, 0, 0, 0.2)",
+                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                  color: "#333",
                 }}
               />
             </div>
@@ -321,10 +305,10 @@ function Home() {
                 className="form-control"
                 required
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.7)", // Fondo blanco semitransparente
-                  border: "1px solid rgba(0, 0, 0, 0.2)", // Borde suave para mejorar visibilidad
-                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)", // Sombra sutil
-                  color: "#333", // Color del texto
+                  backgroundColor: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0, 0, 0, 0.2)",
+                  boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                  color: "#333",
                 }}
               >
                 <option value="">Selecciona una sucursal</option>

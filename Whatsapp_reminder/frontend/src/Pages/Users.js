@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -21,90 +22,97 @@ const Users = () => {
   const [editUserDetails, setEditUserDetails] = useState(null);
   const [error, setError] = useState(null);
 
+  const token = localStorage.getItem("token"); // Obtener el token desde localStorage
+
+  // Asegurarse de que el token está presente
+  if (!token) {
+    setError("No estás autenticado. Inicia sesión para continuar.");
+  }
+
+  // Configuración de Axios con el token
+  const axiosInstance = axios.create({
+    baseURL: "http://127.0.0.1:8000/AutoMensaje/v1/",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`, // Enviar el token en las cabeceras
+    },
+  });
+
+  // Función para obtener usuarios desde el backend
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/AutoMensaje/v1/users/",
-      );
-      if (!response.ok) throw new Error("Error al cargar los usuarios");
-      const data = await response.json();
-      setUsers(data);
+      const response = await axiosInstance.get("users/");
+      setUsers(response.data);
     } catch (error) {
-      setError(error.message);
+      setError("Hubo un problema al cargar los usuarios. Intenta de nuevo.");
+      console.error("Error al cargar los usuarios:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (token) {
+      fetchUsers();
+    }
+  }, [token]);
 
+  // Función para editar usuario
   const editUser = (user) => {
     setEditUserDetails(user);
     setShowEditModal(true);
   };
 
+  // Función para eliminar usuario
   const deleteUser = async (userId) => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/AutoMensaje/v1/users/${userId}/`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!response.ok) {
-        throw new Error("Error al eliminar el usuario");
+      const response = await axiosInstance.delete(`users/${userId}/`);
+      if (response.status === 204) {
+        setUsers(users.filter((user) => user.id !== userId));
+      } else {
+        console.error("Error al eliminar el usuario");
       }
-      setUsers(users.filter((user) => user.id !== userId));
     } catch (error) {
       console.error("Error al eliminar el usuario:", error);
+      setError("Hubo un problema al eliminar el usuario.");
     }
   };
 
+  // Función para crear un nuevo usuario
   const createUser = async () => {
-    // Validación de campos
+    // Validación de campos requeridos
     if (!newUser.username || !newUser.password || !newUser.email) {
       alert("Por favor, completa todos los campos requeridos.");
       return;
     }
 
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/AutoMensaje/v1/users/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newUser),
-        },
-      );
-      if (!response.ok) {
-        throw new Error("Error al crear el usuario");
+      const response = await axiosInstance.post("users/", newUser);
+      if (response.status === 201) {
+        setUsers([...users, response.data]);
+        setShowCreateModal(false);
+        setNewUser({
+          username: "",
+          phone_number: "",
+          email: "",
+          first_name: "",
+          last_name: "",
+          password: "",
+          is_staff: false,
+          is_active: true,
+          is_superuser: false,
+          groups: [],
+          user_permissions: [],
+        });
       }
-      const createdUser = await response.json();
-      setUsers([...users, createdUser]);
-      setShowCreateModal(false);
-      setNewUser({
-        username: "",
-        phone_number: "",
-        email: "",
-        first_name: "",
-        last_name: "",
-        password: "",
-        is_staff: false,
-        is_active: true,
-        is_superuser: false,
-        groups: [],
-        user_permissions: [],
-      });
     } catch (error) {
       console.error("Error al crear el usuario:", error);
+      setError("Hubo un problema al crear el usuario.");
     }
   };
 
+  // Función para actualizar usuario
   const updateUser = async () => {
     if (!editUserDetails.username || !editUserDetails.email) {
       alert("Por favor, completa los campos requeridos.");
@@ -117,23 +125,19 @@ const Users = () => {
     }
 
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/AutoMensaje/v1/users/${editUserDetails.id}/`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(userData),
-        },
+      const response = await axiosInstance.put(
+        `users/${editUserDetails.id}/`,
+        userData,
       );
-
-      if (!response.ok) throw new Error("Error al actualizar el usuario");
-      const updatedUser = await response.json();
       setUsers(
-        users.map((user) => (user.id === updatedUser.id ? updatedUser : user)),
+        users.map((user) =>
+          user.id === response.data.id ? response.data : user,
+        ),
       );
       setShowEditModal(false);
     } catch (error) {
       console.error("Error al actualizar el usuario:", error);
+      setError("Hubo un problema al actualizar el usuario.");
     }
   };
 

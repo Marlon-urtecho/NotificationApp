@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css"; // Importar Bootstrap
 import React, { useState } from "react";
+import axios from "axios";
 
 function ImportarClientes() {
   const [file1, setFile1] = useState(null);
@@ -8,6 +9,25 @@ function ImportarClientes() {
   const [message2, setMessage2] = useState(null);
   const [loading1, setLoading1] = useState(false); // Para mostrar spinner en el primer formulario
   const [loading2, setLoading2] = useState(false); // Para mostrar spinner en el segundo formulario
+
+  const token = localStorage.getItem("token"); // Obtener el token desde localStorage
+
+  // Asegurarse de que el token está presente
+  if (!token) {
+    setMessage1({
+      text: "No estás autenticado. Inicia sesión para continuar.",
+      type: "danger",
+    });
+  }
+
+  // Configuración de Axios con el token
+  const axiosInstance = axios.create({
+    baseURL: "http://127.0.0.1:8000/AutoMensaje/v1/",
+    headers: {
+      "Content-Type": "multipart/form-data",
+      Authorization: `Bearer ${token}`, // Enviar el token en las cabeceras
+    },
+  });
 
   const handleFileChange1 = (e) => {
     setFile1(e.target.files[0]);
@@ -32,17 +52,14 @@ function ImportarClientes() {
     formData.append("file", file1);
 
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/AutoMensaje/v1/api/importar-clientes/",
-        {
-          method: "POST",
-          body: formData,
-        },
+      const response = await axiosInstance.post(
+        "api/importar-clientes/",
+        formData,
       );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status === 200) {
         setMessage1({
           text: "Clientes importados correctamente en el primer formato",
           type: "success",
@@ -79,17 +96,14 @@ function ImportarClientes() {
     formData.append("file", file2);
 
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/AutoMensaje/v1/api/importar_clientes_desde_b2/",
-        {
-          method: "POST",
-          body: formData,
-        },
+      const response = await axiosInstance.post(
+        "api/importar_clientes_desde_b2/",
+        formData,
       );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status === 200) {
         setMessage2({
           text: "Clientes importados correctamente en el segundo formato",
           type: "success",

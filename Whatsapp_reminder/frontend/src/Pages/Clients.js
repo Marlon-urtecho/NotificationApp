@@ -7,9 +7,8 @@ import "jszip"; // Para la exportación CSV, Excel, etc.
 import "pdfmake/build/pdfmake"; // Para la exportación a PDF
 import "pdfmake/build/vfs_fonts"; // Para las fuentes de PDF
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Clients() {
   const [clients, setClients] = useState([]); // Estado para almacenar los clientes
@@ -20,9 +19,6 @@ function Clients() {
   const [showCreateModal, setShowCreateModal] = useState(false); // Estado para controlar la visibilidad del modal de creación
   const navigate = useNavigate();
   const [error, setError] = useState(null);
-
-
-
 
   const dataTableOptions = {
     columnDefs: [

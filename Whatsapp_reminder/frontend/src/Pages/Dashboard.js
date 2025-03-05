@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   CartesianGrid,
   Legend,
@@ -30,30 +31,42 @@ const Dashboard = () => {
     "Noviembre",
     "Diciembre",
   ]);
-
   const [years, setYears] = useState([]); // Para guardar los años disponibles
+  const [error, setError] = useState(null); // Para mostrar errores
+
+  const token = localStorage.getItem("token"); // Obtener el token desde localStorage
+
+  // Asegurarse de que el token está presente
+  if (!token) {
+    setError("No estás autenticado. Inicia sesión para continuar.");
+  }
+
+  // Configuración de Axios con el token
+  const axiosInstance = axios.create({
+    baseURL: "http://127.0.0.1:8000/AutoMensaje/v1/",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`, // Enviar el token en las cabeceras
+    },
+  });
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/AutoMensaje/v1/clientes/",
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setClients(data); // Guardamos los clientes obtenidos
-          generateChartData(data, selectedMonth, selectedYear); // Generamos los datos para el gráfico
-          generateYears(data); // Generamos los años disponibles
-        } else {
-          console.error("Error al cargar los clientes");
-        }
+        const response = await axiosInstance.get("clientes/");
+        setClients(response.data); // Guardamos los clientes obtenidos
+        generateChartData(response.data, selectedMonth, selectedYear); // Generamos los datos para el gráfico
+        generateYears(response.data); // Generamos los años disponibles
       } catch (error) {
         console.error("Error de red al obtener clientes", error);
+        setError("Hubo un problema al cargar los clientes. Intenta de nuevo.");
       }
     };
 
-    fetchClients();
-  }, [selectedMonth, selectedYear]); // Ejecutamos cuando se cambia el mes o el año
+    if (token) {
+      fetchClients();
+    }
+  }, [selectedMonth, selectedYear, token]); // Ejecutamos cuando se cambia el mes o el año o el token
 
   // Genera los años disponibles a partir de los clientes
   const generateYears = (clients) => {

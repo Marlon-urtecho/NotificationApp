@@ -1,0 +1,43 @@
+{
+  "extends": ["plugin:react/recommended", "plugin:prettier/recommended"],
+  "plugins": [
+    "import" // Asegúrate de que 'import' esté aquí
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "rules": {
+    "react/prop-types": "off",
+    "react/jsx-indent": "off",
+    "react/jsx-indent-props": "off",
+    "react/jsx-one-expression-per-line": "off",
+    "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
+    "max-len": "off",
+    "jsx-a11y/label-has-associated-control": "off",
+    "react/button-has-type": "off",
+    "no-multi-spaces": "off",
+    "react/jsx-props-no-multi-spaces": "off",
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": ["**/setupTests.js", "**/*.test.js"]
+      }
+    ],
+    "prettier/prettier": [
+      "error",
+      {
+        "singleQuote": false,
+        "semi": true,
+        "tabWidth": 2
+      }
+    ]
+  }
+}

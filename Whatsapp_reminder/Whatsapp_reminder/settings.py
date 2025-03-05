@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +27,7 @@ SECRET_KEY = 'django-insecure-d=d!d^svjf^l0uok0b21iqh8mfjf(*mdjzm-95t(_cms%i+i_n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -40,18 +42,55 @@ INSTALLED_APPS = [
     'AutoMensaje',
     'django_celery_beat',
     'django_celery_results',
-     'rest_framework',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    #'rest_framework.authtoken',
+    'coreapi',
+    'corsheaders',
+    'django_extensions',
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),  
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Tiempo de expiración del token de acceso
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # Tiempo de expiración del token de refresco
+    'ROTATE_REFRESH_TOKENS': False,  # ¿Rotar el token de refresco?
+    'BLACKLIST_AFTER_ROTATION': False,  # ¿Poner en lista negra los tokens de refresco tras ser rotados?
+    'ALGORITHM': 'HS256',  # Algoritmo de firma
+    'SIGNING_KEY': SECRET_KEY,  # Usar la clave secreta de Django
+}
+
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Esta línea puede ser eliminada si no necesitas autenticación
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://localhost:3001',  
+]
+
 
 ROOT_URLCONF = 'Whatsapp_reminder.urls'
 
@@ -88,6 +127,7 @@ DATABASES = {
     }
 }
 
+AUTH_USER_MODEL = 'AutoMensaje.User'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -126,6 +166,23 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CELERY_TIMEZONE = 'America/Managua'
+CELERY_REDIS_SOCKET_TIMEOUT = 10  # Aumenta el tiempo de espera si es necesario
+
+
+# Celery configuration for retries and timeout handling
+CELERY_REDIS_MAX_CONNECTIONS = 5  # Limita el número de conexiones simultáneas
+CELERY_REDIS_SOCKET_KEEPALIVE = True  # Habilita el "keepalive" de socket para evitar desconexiones
+
+# Retry options
+CELERY_ACKS_LATE = True  # Confirma las tareas solo cuando hayan sido completadas, no cuando se reciban
+CELERY_TASK_RETRY = True  # Reintenta tareas en caso de fallo
+CELERY_TASK_RETRY_POLICY = {
+    'max_retries': 5,  # Maximo de reintentos
+    'interval_start': 0,  # Intervalo inicial entre intentos (en segundos)
+    'interval_step': 0.2,  # Tiempo de espera entre reintentos
+    'interval_max': 1,  # Tiempo máximo de espera entre reintentos
+}
+
 
 
 # Static files (CSS, JavaScript, Images)

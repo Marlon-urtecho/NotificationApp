@@ -1,6 +1,8 @@
+# apps.py
 from django.apps import AppConfig
 
-
 class AutomensajeConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
     name = 'AutoMensaje'
+
+    def ready(self):
+        import AutoMensaje.signals  # Asegúrate de que las señales se carguen al iniciar la aplicación

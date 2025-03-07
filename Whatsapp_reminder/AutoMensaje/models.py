@@ -25,10 +25,11 @@ class Sucursal(models.Model):
     direccion = models.CharField(max_length=200)
     telefono = models.CharField(max_length=15)
     email = models.EmailField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
     
     def __str__(self):
-        return self.nombre  # Agregar la clave foránea aquí
+        return self.nombre
+
 
 class Cliente(models.Model):
     telefono = models.CharField(max_length=15)

@@ -87,11 +87,17 @@ const Users = () => {
       return;
     }
 
+    const userData = { ...newUser };
+
     try {
-      const response = await axiosInstance.post("users/", newUser);
+      const response = await axiosInstance.post("users/", userData);
+
       if (response.status === 201) {
+        // Actualiza la lista de usuarios y cierra el modal
         setUsers([...users, response.data]);
         setShowCreateModal(false);
+
+        // Limpiar el formulario de creación de usuario
         setNewUser({
           username: "",
           phone_number: "",
@@ -107,7 +113,24 @@ const Users = () => {
         });
       }
     } catch (error) {
-      console.error("Error al crear el usuario:", error);
+      console.error(
+        "Error al crear el usuario:",
+        error.response ? error.response.data : error,
+      );
+
+      // Mostrar error más detallado
+      if (error.response) {
+        if (error.response.status === 400) {
+          alert(
+            "Datos incorrectos o faltan campos obligatorios. " +
+              JSON.stringify(error.response.data),
+          );
+        } else {
+          alert("Error al crear el usuario. Intenta de nuevo.");
+        }
+      } else {
+        alert("Error de red o el servidor no respondió.");
+      }
       setError("Hubo un problema al crear el usuario.");
     }
   };

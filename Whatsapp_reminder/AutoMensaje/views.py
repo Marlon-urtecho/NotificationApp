@@ -143,10 +143,9 @@ def obtener_clientes(request):
     serializer = ClienteSerializer(clientes, many=True)
     return Response(serializer.data)
 
-# Vista para obtener las sucursales
 @api_view(['GET'])
-@authentication_classes([JWTAuthentication]) 
-@permission_classes([IsAuthenticated])  # Requiere autenticación
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def obtener_sucursales(request):
     sucursales = Sucursal.objects.all()
     sucursal_serializer = SucursalSerializer(sucursales, many=True)
@@ -169,7 +168,6 @@ class SucursalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Sucursal.objects.all()
     serializer_class = SucursalSerializer
     permission_classes = [IsAuthenticated]  # Requiere autenticación
-
 
 
 # Serializador de User para obtener toda la información del usuario

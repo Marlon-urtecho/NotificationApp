@@ -16,32 +16,57 @@ function Home() {
 
   const [clients, setClients] = useState([]);
   const [sucursales, setSucursales] = useState([]);
-  const token = localStorage.getItem("token"); // Obtener el token JWT desde localStorage
+  const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true); //Estado de carga
+  const [error, setError] = useState(""); //Estado para mensajes de error
 
   // Asegurarse de que el token esté presente
   if (!token) {
     console.error("No estás autenticado. Inicia sesión para continuar.");
   }
 
-  // Configuración de Axios con el token
   const axiosInstance = axios.create({
     baseURL: "http://127.0.0.1:8000/AutoMensaje/v1/",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`, // Enviar el token en las cabeceras
+      Authorization: `Bearer ${token}`,
     },
   });
 
   useEffect(() => {
     const fetchSucursales = async () => {
-      try {
-        const response = await axiosInstance.post("sucursales/", {
-          username: "password", // Asegúrate de que el valor de password sea correcto
-        });
+      const token = localStorage.getItem("token");
 
-        setSucursales(response.data);
+      if (!token) {
+        // Si no hay token, redirigir al login
+        setError("No estás autenticado. Por favor, inicia sesión.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          "http://127.0.0.1:8000/AutoMensaje/v1/sucursales/",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        console.log("Respuesta de sucursales:", response.data);
+
+        if (Array.isArray(response.data)) {
+          setSucursales(response.data); // Actualizar el estado con las sucursales
+          setLoading(false); // Cambiar el estado de carga a falso
+        } else {
+          throw new Error(
+            "Error: las sucursales no están en el formato esperado",
+          );
+        }
       } catch (error) {
-        console.error("Error al obtener sucursales:", error);
+        setError("Error al cargar las sucursales: " + error.message);
+        setLoading(false); // Cambiar el estado de carga a falso
       }
     };
 
@@ -105,7 +130,7 @@ function Home() {
           poliza: row[3] || null,
           fecha_renovacion: row[4] || null,
           precio: row[5] || null,
-          sucursal: null,
+          sucursal: null, // Asignar la sucursal después si es necesario
         };
       });
 
@@ -118,7 +143,7 @@ function Home() {
     for (let i = 0; i < clients.length; i++) {
       const client = clients[i];
 
-      let sucursalId = null; // Ajusta la lógica para obtener la sucursal correcta si es necesario
+      let sucursalId = client.sucursal || null; // Asigna una sucursal válida aquí
 
       const clientData = {
         nombre: client.nombre,

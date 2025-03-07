@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
 import {
-  Route,
   BrowserRouter as Router,
   Routes,
+  Route,
   Navigate,
 } from "react-router-dom";
-import axios from "./Api/Axios"; // Asegúrate de tener la instancia de Axios configurada
-import "./App.scss";
 import Navbar from "./Components/Navbar";
 import Sidebar from "./Components/Sidebar";
+import Home from "./Pages/Home";
 import Clients from "./Pages/Clients";
 import Dashboard from "./Pages/Dashboard";
-import Home from "./Pages/Home";
 import Recordatorios from "./Pages/Recordatorios";
 import Sucursales from "./Pages/Sucursales";
 import Users from "./Pages/Users";
@@ -21,78 +19,51 @@ import Login from "./Pages/Login";
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Este useEffect se ejecutará una sola vez al inicio de la aplicación
+  // Comprobamos si hay un token en localStorage al montar el componente
   useEffect(() => {
     const token = localStorage.getItem("token");
-
     if (token) {
-      // Solo actualizamos el estado si realmente hay un token
-      axios.defaults.headers["Authorization"] = `Bearer ${token}`;
-      setIsAuthenticated(true); // Establecemos la autenticación solo si tenemos el token
+      setIsAuthenticated(true); // Si el token existe, el usuario está autenticado
     }
-  }, []); // Este efecto se ejecuta solo una vez, cuando el componente se monta
-
-  // Evitamos usar un estado en el render que cambie el valor repetidamente y cause bucles infinitos.
-  // El estado isAuthenticated debería cambiar solo si es necesario.
+  }, []);
 
   return (
     <Router>
-      {/* Si está autenticado, mostramos el Navbar */}
-      {isAuthenticated && <Navbar />}
-      <div className="flex">
-        {/* Si está autenticado, mostramos el Sidebar */}
-        {isAuthenticated && <Sidebar />}
-        <div className="content w-100">
+      <div className="app">
+        {/* Solo mostramos el Navbar y Sidebar si el usuario está autenticado */}
+        {isAuthenticated && (
+          <>
+            <Navbar />
+            <div className="flex">
+              <Sidebar />
+              <div className="content w-100">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/clients" element={<Clients />} />
+                  <Route path="/sucursales" element={<Sucursales />} />
+                  <Route path="/users" element={<Users />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route
+                    path="/ImportarClientes"
+                    element={<ImportarClientes />}
+                  />
+                  <Route path="/Recordatorios" element={<Recordatorios />} />
+                </Routes>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Si no está autenticado, solo mostramos el login */}
+        {!isAuthenticated && (
           <Routes>
-            {/* Ruta para login, siempre accesible */}
             <Route
               path="/login"
               element={<Login setIsAuthenticated={setIsAuthenticated} />}
             />
-
-            {/* Las rutas de la aplicación solo se mostrarán si el usuario está autenticado */}
-            <Route
-              path="/"
-              element={isAuthenticated ? <Home /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/clients"
-              element={isAuthenticated ? <Clients /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/sucursales"
-              element={
-                isAuthenticated ? <Sucursales /> : <Navigate to="/login" />
-              }
-            />
-            <Route
-              path="/users"
-              element={isAuthenticated ? <Users /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/dashboard"
-              element={
-                isAuthenticated ? <Dashboard /> : <Navigate to="/login" />
-              }
-            />
-            <Route
-              path="/ImportarClientes"
-              element={
-                isAuthenticated ? (
-                  <ImportarClientes />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-            <Route
-              path="/Recordatorios"
-              element={
-                isAuthenticated ? <Recordatorios /> : <Navigate to="/login" />
-              }
-            />
+            <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
-        </div>
+        )}
       </div>
     </Router>
   );

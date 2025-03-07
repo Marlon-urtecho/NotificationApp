@@ -3,10 +3,14 @@ import "datatables.net"; // Importar DataTables
 import "datatables.net-bs5/css/dataTables.bootstrap5.min.css"; // Importar DataTable CSS
 import "font-awesome/css/font-awesome.min.css"; // Importar Font Awesome
 import $ from "jquery"; // Asegúrate de importar jQuery
-import axios from "axios"; // Importar Axios
-import React, { useEffect, useState } from "react";
+import "jszip"; // Para la exportación CSV, Excel, etc.
+import "pdfmake/build/pdfmake"; // Para la exportación a PDF
+import "pdfmake/build/vfs_fonts"; // Para las fuentes de PDF
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const Sucursales = () => {
+function Sucursales() {
   const [sucursales, setSucursales] = useState([]); // Estado para almacenar las sucursales
   const [dataTable, setDataTable] = useState(null); // Estado para almacenar la instancia de DataTable
   const [editingSucursal, setEditingSucursal] = useState(null); // Estado para almacenar la sucursal que está siendo editada
@@ -14,73 +18,78 @@ const Sucursales = () => {
   const [showCreateModal, setShowCreateModal] = useState(false); // Estado para controlar la visibilidad del modal de creación
   const [users, setUsers] = useState([]); // Estado para almacenar los usuarios
   const [selectedUserId, setSelectedUserId] = useState(null); // Estado para el ID del usuario seleccionado
+  const [error, setError] = useState(null); // Estado para manejar errores
+  const navigate = useNavigate();
 
   const dataTableOptions = {
     columnDefs: [
       { className: "centered", targets: [0, 1, 2, 3, 4] },
-      { orderable: false, targets: [6] },
+      { orderable: false, targets: [4] },
       { searchable: false, targets: [0, 4] },
     ],
-    pageLength: 5,
+    pageLength: 4,
     destroy: true,
+    dom: "Bfrtip", // Asegúrate de que los botones estén en el DOM
+    buttons: ["copy", "csv", "excel", "pdf", "print"],
+    language: {
+      search: "Buscar:",
+      lengthMenu: "Mostrar _MENU_ registros por página",
+      info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+      paginate: {
+        first: "Primero",
+        last: "Último",
+        next: "Siguiente",
+        previous: "Anterior",
+      },
+      emptyTable: "No hay datos disponibles",
+    },
   };
+
+  // Referencia para la tabla
+  const tableRef = useRef(null);
 
   // Función para inicializar la DataTable
   const initDataTable = () => {
     if (dataTable) {
       dataTable.destroy(); // Destruir la instancia anterior
     }
-    // Inicializar la DataTable con las opciones proporcionadas
-    const newDataTable = $("#datatable-sucursales").DataTable(dataTableOptions);
-    setDataTable(newDataTable); // Guardar la instancia de DataTable
+    const newDataTable = $(tableRef.current).DataTable(dataTableOptions);
+    setDataTable(newDataTable);
   };
 
-  // Función para obtener las sucursales desde el backend Django usando Axios
+  // Función para obtener las sucursales desde el backend usando axios
   const fetchSucursales = async () => {
-    const token = localStorage.getItem("token"); // Obtener el token desde localStorage
+    const token = localStorage.getItem("token");
 
     if (!token) {
-      console.error("No hay token, por favor, inicia sesión");
-      alert("No hay token, por favor, inicia sesión");
+      setError("No estás autenticado. Por favor, inicia sesión.");
+      navigate("/login"); // Redirige al login
       return;
     }
-
-    console.log("Token en fetchSucursales:", token); // Verifica el valor del token
 
     try {
       const response = await axios.get(
         "http://127.0.0.1:8000/AutoMensaje/v1/sucursales/",
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Enviar el token en la cabecera Authorization
+            Authorization: `Bearer ${token}`,
           },
         },
       );
-      if (response.status === 200) {
-        setSucursales(response.data); // Actualizar el estado con los datos de las sucursales
-      } else {
-        console.error("Error al obtener las sucursales:", response.data);
-        alert(
-          "Error al obtener las sucursales: " + response.data.detail ||
-            response.statusText,
-        );
-      }
+      setSucursales(response.data); // Actualizar el estado con los datos de las sucursales
     } catch (error) {
-      console.error(
-        "Error al obtener las sucursales:",
-        error.response ? error.response.data : error.message,
-      );
-      alert(`Error: ${error.response?.data?.detail || error.message}`);
+      console.error("Error al cargar las sucursales:", error);
+      setError("Hubo un problema al cargar las sucursales.");
     }
   };
 
-  // Función para obtener los usuarios desde el backend Django usando Axios con autenticación
+  // Función para obtener los usuarios desde el backend usando axios
   const fetchUsers = async () => {
-    const token = localStorage.getItem("token"); // Obtener el token desde localStorage
+    const token = localStorage.getItem("token");
 
     if (!token) {
-      console.error("No hay token, por favor, inicia sesión");
-      alert("No hay token, por favor, inicia sesión");
+      setError("No estás autenticado. Por favor, inicia sesión.");
+      navigate("/login"); // Redirige al login
       return;
     }
 
@@ -89,65 +98,45 @@ const Sucursales = () => {
         "http://127.0.0.1:8000/AutoMensaje/v1/users/",
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Enviar el token en la cabecera Authorization
+            Authorization: `Bearer ${token}`,
           },
         },
       );
-      if (response.status === 200) {
-        setUsers(response.data); // Establecer los usuarios en el estado
-      } else {
-        console.error("Error al obtener los usuarios:", response.data);
-        alert(
-          "Error al obtener los usuarios: " + response.data.detail ||
-            response.statusText,
-        );
-      }
+      setUsers(response.data); // Establecer los usuarios en el estado
     } catch (error) {
-      console.error(
-        "Error al cargar los usuarios:",
-        error.response ? error.response.data : error.message,
-      );
-      alert(`Error: ${error.response?.data?.detail || error.message}`);
+      console.error("Error al cargar los usuarios:", error);
+      setError("Hubo un problema al cargar los usuarios.");
     }
   };
 
-  // Función para eliminar una sucursal usando Axios
+  // Función para eliminar una sucursal usando axios
   const deleteSucursal = async (id) => {
-    const token = localStorage.getItem("token"); // Obtener el token desde localStorage
-
-    if (!token) {
-      console.error("No hay token, por favor, inicia sesión");
-      alert("No hay token, por favor, inicia sesión");
-      return;
-    }
-
     if (window.confirm("¿Estás seguro de que deseas eliminar esta sucursal?")) {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No estás autenticado. Por favor, inicia sesión.");
+        navigate("/login");
+        return;
+      }
+
       try {
         const response = await axios.delete(
           `http://127.0.0.1:8000/AutoMensaje/v1/sucursales/${id}/`,
           {
             headers: {
-              Authorization: `Bearer ${token}`, // Enviar el token en la cabecera Authorization
+              Authorization: `Bearer ${token}`,
             },
           },
         );
-
         if (response.status === 204) {
           alert("Sucursal eliminada");
           fetchSucursales(); // Recargar la lista de sucursales
         } else {
-          console.error("Error al eliminar la sucursal:", response.data);
-          alert(
-            "Error al eliminar la sucursal: " + response.data.detail ||
-              response.statusText,
-          );
+          alert("Error al eliminar la sucursal");
         }
       } catch (error) {
-        console.error(
-          "Error al eliminar la sucursal:",
-          error.response ? error.response.data : error.message,
-        );
-        alert(`Error: ${error.response?.data?.detail || error.message}`);
+        console.error("Error al eliminar la sucursal:", error);
+        setError("Hubo un problema al eliminar la sucursal.");
       }
     }
   };
@@ -157,16 +146,8 @@ const Sucursales = () => {
     setEditingSucursal(sucursal); // Establecer la sucursal a editar
   };
 
-  // Función para actualizar una sucursal usando Axios
+  // Función para actualizar una sucursal usando axios
   const updateSucursal = async () => {
-    const token = localStorage.getItem("token"); // Obtener el token desde localStorage
-
-    if (!token) {
-      console.error("No hay token, por favor, inicia sesión");
-      alert("No hay token, por favor, inicia sesión");
-      return;
-    }
-
     if (editingSucursal) {
       const sucursalData = {
         nombre: editingSucursal.nombre,
@@ -176,47 +157,48 @@ const Sucursales = () => {
         user_id: editingSucursal.user, // Asegúrate de pasar solo el ID del usuario
       };
 
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No estás autenticado. Por favor, inicia sesión.");
+        navigate("/login");
+        return;
+      }
+
       try {
         const response = await axios.put(
           `http://127.0.0.1:8000/AutoMensaje/v1/sucursales/${editingSucursal.id}/`,
           sucursalData,
           {
             headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // Enviar el token en la cabecera Authorization
+              Authorization: `Bearer ${token}`,
             },
           },
         );
-
         if (response.status === 200) {
           alert("Sucursal actualizada");
           fetchSucursales(); // Recargar la lista de sucursales
           setEditingSucursal(null); // Limpiar la sucursal que está siendo editada
         } else {
-          const errorData = await response.data;
-          console.error("Error al actualizar la sucursal:", errorData);
           alert("Error al actualizar la sucursal");
         }
       } catch (error) {
-        console.error(
-          "Error al actualizar la sucursal:",
-          error.response ? error.response.data : error.message,
-        );
-        alert(`Error: ${error.response?.data?.detail || error.message}`);
+        console.error("Error al actualizar la sucursal:", error);
+        setError("Hubo un problema al actualizar la sucursal.");
       }
     }
   };
 
-  // Función para crear una sucursal usando Axios
+  // Función para manejar cambios en el formulario de creación
+  const handleCreateChange = (e) => {
+    const { name, value } = e.target;
+    setNewSucursal({
+      ...newSucursal,
+      [name]: value,
+    });
+  };
+
+  // Función para crear una sucursal usando axios
   const createSucursal = async () => {
-    const token = localStorage.getItem("token"); // Obtener el token desde localStorage
-
-    if (!token) {
-      console.error("No hay token, por favor, inicia sesión");
-      alert("No hay token, por favor, inicia sesión");
-      return;
-    }
-
     const sucursalData = {
       nombre: newSucursal.nombre,
       direccion: newSucursal.direccion,
@@ -225,39 +207,39 @@ const Sucursales = () => {
       user_id: newSucursal.user, // Asegúrate de pasar solo el ID del usuario
     };
 
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("No estás autenticado. Por favor, inicia sesión.");
+      navigate("/login");
+      return;
+    }
+
     try {
       const response = await axios.post(
         "http://127.0.0.1:8000/AutoMensaje/v1/sucursales/",
         sucursalData,
         {
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Enviar el token en la cabecera Authorization
+            Authorization: `Bearer ${token}`,
           },
         },
       );
-
       if (response.status === 201) {
         alert("Sucursal creada con éxito");
         fetchSucursales(); // Recargar la lista de sucursales
       } else {
-        const errorData = await response.data;
-        console.error("Detalles del error:", errorData);
         alert("Error al crear la sucursal");
       }
     } catch (error) {
-      console.error(
-        "Error al crear la sucursal:",
-        error.response ? error.response.data : error.message,
-      );
-      alert(`Error: ${error.response?.data?.detail || error.message}`);
+      console.error("Error al crear la sucursal:", error);
+      setError("Hubo un problema al crear la sucursal.");
     }
   };
 
   // Usamos useEffect para cargar las sucursales y usuarios
   useEffect(() => {
-    fetchSucursales(); // Traer los datos de las sucursales desde Django
-    fetchUsers();
+    fetchSucursales(); // Traer las sucursales desde el backend
+    fetchUsers(); // Traer los usuarios desde el backend
   }, []);
 
   // Usamos otro useEffect para inicializar DataTable cuando las sucursales estén listas
@@ -540,6 +522,6 @@ const Sucursales = () => {
       )}
     </div>
   );
-};
+}
 
 export default Sucursales;

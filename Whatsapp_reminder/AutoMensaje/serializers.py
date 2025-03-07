@@ -58,7 +58,6 @@ class RecordatorioSerializer(serializers.ModelSerializer):
         model = Recordatorio
         fields = '__all__'
 
-
 class SucursalSerializer(serializers.ModelSerializer):
     # Mostrar detalles del usuario (nombre de usuario, email, etc.)
     user = UserSerializer(required=False)  # Para mostrar detalles del usuario en la respuesta (GET)
@@ -72,29 +71,29 @@ class SucursalSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Extraemos el user_id si está presente
-        user_data = validated_data.pop('user_id', None)
+        user_id = validated_data.pop('user_id', None)
         
         # Creamos la sucursal
         sucursal = Sucursal.objects.create(**validated_data)
 
         # Si se ha proporcionado un user_id, asignamos el usuario a la sucursal
-        if user_data:
-            sucursal.user = user_data
+        if user_id:
+            sucursal.user = user_id
             sucursal.save()
 
         return sucursal
 
     def update(self, instance, validated_data):
         # Extraemos el user_id si está presente
-        user_data = validated_data.pop('user_id', None)
+        user_id = validated_data.pop('user_id', None)
 
         # Actualizamos los campos de la sucursal
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         
         # Si se ha proporcionado un user_id, asignamos el nuevo usuario
-        if user_data:
-            instance.user = user_data
+        if user_id:
+            instance.user = user_id
         
         instance.save()
         return instance

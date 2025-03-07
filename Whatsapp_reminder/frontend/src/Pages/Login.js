@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 const Login = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState(""); // Cambié 'email' a 'username'
+  const [username, setUsername] = useState(""); // Usamos 'username' en lugar de 'email'
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -14,20 +14,21 @@ const Login = ({ setIsAuthenticated }) => {
     setError(null);
 
     try {
+      // Hacemos la petición al servidor para obtener los tokens
       const response = await fetch(
         "http://localhost:8000/AutoMensaje/v1/api/token/",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: username, // Usamos el 'username' en lugar del 'email'
+            username: username, // Usamos 'username' en lugar de 'email'
             password: password, // Enviamos la contraseña
           }),
         },
       );
 
       const data = await response.json();
-      console.log("Respuesta del servidor:", data); // Imprime la respuesta completa para asegurarte de que los datos estén bien
+      console.log("Respuesta del servidor:", data);
 
       if (!response.ok) {
         throw new Error(data.detail || "Credenciales incorrectas.");
@@ -35,21 +36,24 @@ const Login = ({ setIsAuthenticated }) => {
 
       // Verificamos si los tokens están presentes en la respuesta
       if (data.access && data.refresh) {
-        console.log("Tokens recibidos:", data); // Imprime los tokens para verificar que están presentes
+        console.log("Tokens recibidos:", data);
 
         // Almacenar los tokens en localStorage
         localStorage.setItem("token", data.access);
         localStorage.setItem("refresh_token", data.refresh); // Guardar refresh token
 
+        // Actualizamos el estado de la autenticación
         setIsAuthenticated(true);
-        navigate("/"); // Redirige al dashboard o página principal
+
+        // Redirigimos al dashboard o página principal
+        navigate("/");
       } else {
         throw new Error("Tokens no recibidos del servidor.");
       }
     } catch (error) {
-      setError(error.message);
+      setError(error.message); // Mostramos el error en la interfaz
     } finally {
-      setLoading(false);
+      setLoading(false); // Cambiamos el estado de 'loading'
     }
   };
 
@@ -76,6 +80,7 @@ const Login = ({ setIsAuthenticated }) => {
           <h2 className="mb-3">Bienvenido</h2>
           <h3 className="mb-4">Ingrese sus datos de acceso</h3>
 
+          {/* Mostrar el error si existe */}
           {error && <div className="alert alert-danger w-100">{error}</div>}
 
           <form className="w-100" onSubmit={handleLogin}>

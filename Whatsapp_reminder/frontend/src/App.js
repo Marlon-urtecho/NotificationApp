@@ -1,59 +1,71 @@
-import React, { useEffect, useState } from 'react';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Navbar from "./Components/Navbar";
+import Sidebar from "./Components/Sidebar";
+import Home from "./Pages/Home";
+import Clients from "./Pages/Clients";
+import Dashboard from "./Pages/Dashboard";
+import Recordatorios from "./Pages/Recordatorios";
+import Sucursales from "./Pages/Sucursales";
+import Users from "./Pages/Users";
+import ImportarClientes from "./Pages/ImportarClientes";
+import Login from "./Pages/Login";
 
 function App() {
-  const [recordatoriosPendientes, setRecordatoriosPendientes] = useState([]);
-  const [recordatoriosEnviados, setRecordatoriosEnviados] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Comprobamos si hay un token en localStorage al montar el componente
   useEffect(() => {
-    // Hacer una solicitud a la API de Django para obtener los recordatorios
-    fetch('http://localhost:8000/api/recordatorios/')  // Asegúrate de que esta URL sea correcta
-      .then(response => response.json())
-      .then(data => {
-        const pendientes = data.recordatorios.filter(recordatorio => !recordatorio.enviado);
-        const enviados = data.recordatorios.filter(recordatorio => recordatorio.enviado);
-
-        setRecordatoriosPendientes(pendientes);
-        setRecordatoriosEnviados(enviados);
-      })
-      .catch(error => console.error('Error al obtener los datos:', error));
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsAuthenticated(true); // Si el token existe, el usuario está autenticado
+    }
   }, []);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Recordatorios Pendientes</h1>
-        <ul>
-          {recordatoriosPendientes.length > 0 ? (
-            recordatoriosPendientes.map((recordatorio, index) => (
-              <li key={index}>
-                Cliente: {recordatorio.cliente.nombre}<br />
-                Mensaje: {recordatorio.mensaje}<br />
-                Fecha de Envío: {recordatorio.fecha_envio}
-              </li>
-            ))
-          ) : (
-            <p>No hay recordatorios pendientes.</p>
-          )}
-        </ul>
+    <Router>
+      <div className="app">
+        {/* Solo mostramos el Navbar y Sidebar si el usuario está autenticado */}
+        {isAuthenticated && (
+          <>
+            <Navbar />
+            <div className="flex">
+              <Sidebar />
+              <div className="content w-100">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/clients" element={<Clients />} />
+                  <Route path="/sucursales" element={<Sucursales />} />
+                  <Route path="/users" element={<Users />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route
+                    path="/ImportarClientes"
+                    element={<ImportarClientes />}
+                  />
+                  <Route path="/Recordatorios" element={<Recordatorios />} />
+                </Routes>
+              </div>
+            </div>
+          </>
+        )}
 
-        <h1>Recordatorios Enviados</h1>
-        <ul>
-          {recordatoriosEnviados.length > 0 ? (
-            recordatoriosEnviados.map((recordatorio, index) => (
-              <li key={index}>
-                Cliente: {recordatorio.cliente.nombre}<br />
-                Mensaje: {recordatorio.mensaje}<br />
-                Fecha de Envío: {recordatorio.fecha_envio}<br />
-                Estado: {recordatorio.enviado ? 'Enviado' : 'Pendiente'}
-              </li>
-            ))
-          ) : (
-            <p>No hay recordatorios enviados.</p>
-          )}
-        </ul>
-      </header>
-    </div>
+        {/* Si no está autenticado, solo mostramos el login */}
+        {!isAuthenticated && (
+          <Routes>
+            <Route
+              path="/login"
+              element={<Login setIsAuthenticated={setIsAuthenticated} />}
+            />
+            <Route path="*" element={<Navigate to="/login" />} />
+          </Routes>
+        )}
+      </div>
+    </Router>
   );
 }
 
